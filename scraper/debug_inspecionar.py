@@ -22,10 +22,11 @@ LOGS_DIR = os.path.join(config.BASE_DIR, "logs")
 # Domínio (ou pedaço dele) -> chave do scraper em SCRAPERS_DISPONIVEIS.
 # Adicione uma linha aqui pra cada fornecedor novo.
 DOMINIO_PARA_FORNECEDOR = {
-    "atacadao.com.br": "atacadao",
-    "stokonline.com.br": "stock",
-    "asunonline.com.br": "asun",
+    # "atacadao.com.br": "atacadao",
+    # "stokonline.com.br": "stock",
+    # "asunonline.com.br": "asun",
     "fortatacadista.com.br": "fort",
+    # "gimba.com.br": "gimba",
 }
 
 
