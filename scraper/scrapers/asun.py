@@ -1,5 +1,5 @@
 """
-Scraper para o Asun Supermercados (asunonline.com.br).
+Scraper para o Asun Supermercados (levemaisonline.com.br).
 Plataforma: Osuper. O site não vende no modelo atacarejo tradicional, mas
 tem promoções (preço riscado + badge de desconto). Detalhes e histórico
 de ajustes: ver README, seção "Fornecedores já mapeados".
