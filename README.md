@@ -6,11 +6,6 @@ SQLite local (histórico) e sincroniza automaticamente com uma planilha
 do Google Sheets. Feito para pesquisa de preços de insumos, mas serve
 pra qualquer coleta parecida.
 
-**Como apresentar o projeto em uma frase:** um robô que "faz compras"
-nos sites dos mercados todo dia, sem clicar em nada manualmente, e
-entrega os preços prontos numa planilha — incluindo um print de cada
-produto, pra conferência.
-
 ---
 
 ## Estrutura do projeto
