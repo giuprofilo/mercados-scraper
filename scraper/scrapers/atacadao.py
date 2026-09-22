@@ -179,7 +179,8 @@ class AtacadaoScraper(BaseScraper):
                                 " ", "_"
                             )[:60]
                             caminho_print = os.path.join(
-                                config.PRINTS_DIR, f"p{pagina}_{i}_{nome_seguro}.png"
+                                config.PRINTS_DIR,
+                                f"atacadao_p{pagina}_{i}_{nome_seguro}.png",
                             )
 
                             card_locator = self.page.locator(self.SEL_CARD_PRODUTO).nth(

@@ -10,10 +10,10 @@ import config as config
 # então não há conflito entre eles dentro do mesmo perfil.
 SITES = {
     # "stock": "https://www.stokonline.com.br/",
-    # "atacadao": "https://www.atacadao.com.br/",
+    "atacadao": "https://www.atacadao.com.br/",
     # "asun": "https://www.levemaisonline.com.br/",
     # "fort": "https://www.fortatacadista.com.br/",
-    "gimba": "https://www.gimba.com.br/",
+    # "gimba": "https://www.gimba.com.br/",
 }
 
 

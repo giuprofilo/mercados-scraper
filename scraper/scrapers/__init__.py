@@ -4,6 +4,7 @@ from scrapers.stock import StockScraper
 from scrapers.asun import AsunScraper
 from scrapers.fort import FortScraper
 from scrapers.gimba import GimbaScraper
+from scrapers.armazem import ArmazemScraper
 
 SCRAPERS_DISPONIVEIS: dict[str, type[BaseScraper]] = {
     "atacadao": AtacadaoScraper,
@@ -11,6 +12,7 @@ SCRAPERS_DISPONIVEIS: dict[str, type[BaseScraper]] = {
     "asun": AsunScraper,
     "fort": FortScraper,
     "gimba": GimbaScraper,
+    "armazem": ArmazemScraper,
 }
 
 __all__ = ["BaseScraper", "SCRAPERS_DISPONIVEIS"]
