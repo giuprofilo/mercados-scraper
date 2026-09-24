@@ -13,5 +13,3 @@ atacado_precos.db-wal
 logs/
 screenshots/
 exports/*.csv
-docs/
-CLAUDE.md
