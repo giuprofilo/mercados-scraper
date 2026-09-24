@@ -5,27 +5,33 @@ LISTA_ALIMENTOS_PADRAO (data/alimentos.py).
 
 _A = "https://www.atacadao.com.br"
 
-__FRUTAS = [
+_FRUTAS = [
     "abacate",
     "abacaxi",
     "banana",
     "bergamota",
     "goiaba",
     "laranja",
-    "limão tahiti",
+    "limão",
+    "limao",
     "maçã",
+    "maca",
     "maçãs",
     "mamão",
+    "mamao",
     "manga",
     "maracujá",
+    "maracuja",
     "melancia",
     "melão",
+    "melao",
     "pêra",
     "tanjerina",
     "uva",
 ]
 _LEGUMES = [
     "abóbora",
+    "abobora",
     "abobrinha",
     "aipim",
     "alho",
@@ -42,26 +48,43 @@ _LEGUMES = [
     "mandioca",
     "milho",
     "pimentão",
+    "pimentao",
     "tomate",
     "vagem",
 ]
 _VERDURAS = [
     "acelga",
     "agrião",
+    "agriao",
     "alface",
     "couve",
     "couve chinesa",
     "couve flor",
     "espinafre",
     "brócolis",
+    "brocolis",
     "chicória",
+    "chicoria",
     "salsa",
     "salsinha",
     "cheiro verde",
 ]
 
-_AVES = ["peito", "coxa", "sobrecoxa", "sassami", "filézinho", "filé"]
-_BOVINA = ["acém", "moído", "moída", "músculo", "fígado", "dianteiro", "paleta"]
+_AVES = ["peito", "coxa", "sobrecoxa", "filé"]
+_BOVINA = [
+    "acém",
+    "moído",
+    "moída",
+    "músculo",
+    "acem",
+    "moido",
+    "moida",
+    "musculo",
+    "fígado",
+    "figado",
+    "dianteiro",
+    "paleta",
+]
 _SUINA = (["lombo", "copa lombo"],)
 _PEIXE = ["pescada"]
 
@@ -149,7 +172,7 @@ TAREFAS_ATACADAO = [
         "fornecedor": "atacadao",
         "categoria": "Hortifruti - frutas",
         "url": f"{_A}/frutas/fruta-fresca",
-        "palavras_chave": __FRUTAS,
+        "palavras_chave": _FRUTAS,
     },
     {
         "fornecedor": "atacadao",
