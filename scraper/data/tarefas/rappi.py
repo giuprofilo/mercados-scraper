@@ -1,16 +1,22 @@
 """
-Tarefas de coleta do Armazém da Maria (armazemdamaria.com.br), filtradas
-pela LISTA_ALIMENTOS_PADRAO (data/alimentos.py).
+Tarefas de coleta do Rappi — Assaí Atacadista Água Verde (Curitiba/PR),
+filtradas pela LISTA_ALIMENTOS_PADRAO (data/alimentos.py).
 
-A loja vem na URL: /loja-1 é Curitiba/PR (a outra é Campinas/SP; não há
-loja em Porto Alegre). As subcategorias têm URL própria (/loja-1/<slug>-<id>)
-e, onde não achei subcategoria, uso a busca do site (/loja-1/busca?q=...).
+A loja vem na URL (/lojas/900637167-assaiatacadista-nc). Os corredores têm
+URL própria (/<departamento>/<corredor>) e, onde não há corredor, uso a
+busca da loja (/s?term=...), que traz resultados aproximados — as
+palavras_chave filtram.
 
-Sem tarefa por não existir no site: pescada e polaca (a categoria Pescados
-só tem tilápia e camarão) e aveia (só aparece espalhada em vários setores).
+Diferenças do Rappi em relação aos outros sites:
+- Tomate, cebola, cenoura, pimentão etc. ficam em "Vegetais" junto com as
+  verduras, por isso legumes e verduras são buscados nos dois corredores.
+- Não existe "charque": a carne seca aparece como "jerked beef".
+- Lentilha não tem corredor (só a de vapor aparece em Grãos) — vai pela busca.
+- Pescada existe (Costa Sul Pescada Espalmada), mas estava esgotada no
+  levantamento; a tarefa fica para quando voltar ao estoque.
 """
 
-_B = "https://www.armazemdamaria.com.br/loja-1"
+_B = "https://www.rappi.com.br/lojas/900637167-assaiatacadista-nc"
 
 _FRUTAS = [
     "abacate",
@@ -33,7 +39,6 @@ _FRUTAS = [
     "melão",
     "melao",
     "pêra",
-    "pera",
     "tanjerina",
     "uva",
 ]
@@ -83,11 +88,11 @@ _BOVINA = [
     "moído",
     "moída",
     "músculo",
+    "fígado",
     "acem",
     "moido",
     "moida",
     "musculo",
-    "fígado",
     "figado",
     "dianteiro",
     "paleta",
@@ -102,41 +107,48 @@ _FERMENTOS = [
     "instantaneo",
 ]
 
-TAREFAS_ARMAZEM = [
+TAREFAS_RAPPI = [
     # --- Mercearia ---
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Mercearia",
-        "url": f"{_B}/arroz-e-feijao-2354",
+        "url": f"{_B}/mercearia/arroz",
+        "palavras_chave": ["arroz branco"],
+    },
+    {
+        "fornecedor": "rappi",
+        "categoria": "Mercearia",
+        "url": f"{_B}/mercearia/graos-e-cereais",
         "palavras_chave": [
-            "arroz branco",
             "feijão preto",
             "feijão carioca",
             "feijão carioquinha",
+            "aveia em flocos",
+            "aveia flocos",
         ],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Mercearia",
-        "url": f"{_B}/graos-e-cereais-2370",
+        "url": f"{_B}/s?term=lentilha",
         "palavras_chave": ["lentilha"],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Mercearia",
-        "url": f"{_B}/acucares-e-adocantes-2366",
+        "url": f"{_B}/mercearia/acucar-e-adocante",
         "palavras_chave": ["refinado"],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Massas",
-        "url": f"{_B}/massas-tradicionais-2302",
+        "url": f"{_B}/mercearia/massas",
         "palavras_chave": ["espaguete", "parafuso", "penne"],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Mercearia",
-        "url": f"{_B}/farinaceos-e-amidos-2363",
+        "url": f"{_B}/mercearia/farinhas",
         "palavras_chave": [
             "amido de milho",
             "farinha de trigo",
@@ -145,114 +157,114 @@ TAREFAS_ARMAZEM = [
         ],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Fermentos",
-        "url": f"{_B}/busca?q=fermento",
+        "url": f"{_B}/mercearia/confeitaria",
         "palavras_chave": _FERMENTOS,
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Azeites",
-        "url": f"{_B}/oleos-e-azeites-2371",
+        "url": f"{_B}/mercearia/oleos-azeites-e-vinagres",
         "palavras_chave": ["oliva"],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Óleo",
-        "url": f"{_B}/oleos-e-azeites-2371",
+        "url": f"{_B}/mercearia/oleos-azeites-e-vinagres",
         "palavras_chave": ["soja"],
     },
     # --- Açougue ---
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Aves",
-        "url": f"{_B}/frango-2058",
+        "url": f"{_B}/acougue-e-peixaria/aves",
         "palavras_chave": _AVES,
     },
     {
-        "fornecedor": "armazem",
-        "categoria": "Aves",
-        "url": f"{_B}/frango-in-natura-2425",
-        "palavras_chave": _AVES,
-    },
-    {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Carne bovina",
-        "url": f"{_B}/carne-bovina-2060",
+        "url": f"{_B}/acougue-e-peixaria/bovinos",
         "palavras_chave": _BOVINA,
     },
     {
-        "fornecedor": "armazem",
-        "categoria": "Carne bovina",
-        "url": f"{_B}/acougue-black-2462",
-        "palavras_chave": _BOVINA,
-    },
-    {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Carne bovina - Seca",
-        "url": f"{_B}/busca?q=charque",
-        "palavras_chave": ["charque"],
+        "url": f"{_B}/s?term=carne%20seca",
+        "palavras_chave": ["charque", "carne seca", "jerked", "jerk beef"],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Carne suína",
-        "url": f"{_B}/carnes-suinas-2383",
+        "url": f"{_B}/acougue-e-peixaria/suinos",
         "palavras_chave": _SUINA,
     },
     {
-        "fornecedor": "armazem",
-        "categoria": "Carne suína",
-        "url": f"{_B}/suinos-black-2472",
-        "palavras_chave": _SUINA,
+        "fornecedor": "rappi",
+        "categoria": "Peixes",
+        "url": f"{_B}/s?term=pescada",
+        "palavras_chave": ["pescada", "polaca"],
     },
     # --- Hortifruti ---
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Hortifruti - frutas",
-        "url": f"{_B}/frutas-2247",
+        "url": f"{_B}/hortifruti/frutas",
         "palavras_chave": _FRUTAS,
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Hortifruti - legumes",
-        "url": f"{_B}/legumes-2255",
+        "url": f"{_B}/hortifruti/legumes",
         "palavras_chave": _LEGUMES,
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
+        "categoria": "Hortifruti - legumes",
+        "url": f"{_B}/hortifruti/vegetais",
+        "palavras_chave": _LEGUMES,
+    },
+    {
+        "fornecedor": "rappi",
         "categoria": "Hortifruti - verduras",
-        "url": f"{_B}/verduras-2251",
+        "url": f"{_B}/hortifruti/vegetais",
         "palavras_chave": _VERDURAS,
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
+        "categoria": "Hortifruti - verduras",
+        "url": f"{_B}/hortifruti/ervas-e-aromaticos",
+        "palavras_chave": _VERDURAS,
+    },
+    {
+        "fornecedor": "rappi",
         "categoria": "Hortifruti - ovos",
-        "url": f"{_B}/ovos-2250",
+        "url": f"{_B}/laticinios-e-ovos/ovos",
         "palavras_chave": ["branco", "brancos", "ovo branco", "ovos brancos"],
     },
     # --- Frios e laticínios ---
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Frios e laticínios",
-        "url": f"{_B}/menteigas-e-margarinas-2317",
+        "url": f"{_B}/laticinios-e-ovos/manteiga-e-margarina",
         "palavras_chave": ["s sal", "sem sal"],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Frios e laticínios",
-        "url": f"{_B}/queijos-2457",
+        "url": f"{_B}/queijos-e-frios/queijos",
         "palavras_chave": ["minas", "frescal"],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Frios e laticínios",
-        "url": f"{_B}/queijos-pedaco-2455",
+        "url": f"{_B}/queijos-e-frios/queijos-frescos",
         "palavras_chave": ["minas", "frescal"],
     },
     {
-        "fornecedor": "armazem",
+        "fornecedor": "rappi",
         "categoria": "Leite",
-        "url": f"{_B}/matinais-2342",
+        "url": f"{_B}/laticinios-e-ovos/leite-em-po",
         "palavras_chave": ["leite em pó", "leite em po", "leite pó", "leite po"],
     },
 ]
