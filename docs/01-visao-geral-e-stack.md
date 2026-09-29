@@ -29,6 +29,7 @@ python main.py --so-relatorio               # só relatório do banco, sem colet
 python main.py                              # coleta + SQLite + Sheets (produção)
 python setup_sessao.py                      # abre navegador visível p/ salvar CEP/login (1x por site)
 python debug_inspecionar.py "<url>"         # salva logs/debug_pagina.html + screenshot; mostra nº de cards
+python ceasa_pdf.py ../CEASA/<cotacao>.pdf  # PDF da CEASA-PR -> exports/ceasa_curitiba_<data>.csv (só itens da lista do Atacadão; requer pdftotext)
 ```
 Imports são relativos à pasta `scraper/` (`import config`, `from database import ...`), então **sempre
 executar de dentro de `scraper/`**.

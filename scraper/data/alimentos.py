@@ -81,7 +81,7 @@ LISTA_ALIMENTOS_PADRAO = [
     "queijo frescal",
     "queijo minas",
     "salsa",
-    "tanjerina",
+    "tangerina",
     "tomate",
     "uva",
     "vagem",

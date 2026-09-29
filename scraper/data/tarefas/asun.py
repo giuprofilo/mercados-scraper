@@ -107,7 +107,7 @@ TAREFAS_ASUN = [
             "melancia",
             "melão",
             "pêra",
-            "tanjerina",
+            "tangerina",
             "uva",
         ],
     },

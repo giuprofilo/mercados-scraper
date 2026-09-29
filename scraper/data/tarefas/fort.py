@@ -118,7 +118,7 @@ TAREFAS_FORT = [
             "melancia",
             "melão",
             "pêra",
-            "tanjerina",
+            "tangerina",
             "uva",
         ],
     },

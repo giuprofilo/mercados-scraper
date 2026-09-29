@@ -26,7 +26,7 @@ _FRUTAS = [
     "melão",
     "melao",
     "pêra",
-    "tanjerina",
+    "tangerina",
     "uva",
 ]
 _LEGUMES = [
@@ -39,6 +39,7 @@ _LEGUMES = [
     "batata doce",
     "batata inglesa",
     "batata baroa",
+    "batata salsa",
     "berinjela",
     "beterraba",
     "cebola",
@@ -46,11 +47,14 @@ _LEGUMES = [
     "chuchu",
     "inhame",
     "mandioca",
+    "mandioquinha",
     "milho",
     "pimentão",
     "pimentao",
     "tomate",
     "vagem",
+    "ovo",
+    "ovos",
 ]
 _VERDURAS = [
     "acelga",

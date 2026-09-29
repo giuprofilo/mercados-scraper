@@ -34,7 +34,7 @@ _FRUTAS = [
     "melao",
     "pêra",
     "pera",
-    "tanjerina",
+    "tangerina",
     "uva",
 ]
 _LEGUMES = [
