@@ -33,9 +33,12 @@ Dois formatos (detectados pelo texto do PDF):
   pesquisador e insumos vêm dos CSVs em ../csv/ (cópias das abas da planilha);
   Preço PRODUTO = mais comum da embalagem, PREÇO FINAL = R$/kg (peso médio da
   faixa da embalagem; "dz." com peso por unidade = 12 x peso). Sem peso (Dz.,
-  Mç., bandeja, ovos) não há R$/kg e a linha fica de fora (AVISO). Melancia
+  Mç., ovos) PREÇO FINAL = o próprio preço da embalagem. Observações = insumo +
+  "Unidade: <embalagem>". FONTE = FONTE_MT (página do Prohort). Melancia
   ("Un. (11 a15Kg)" a R$ 2,50) é preço por kg, não por unidade. Mín/máx e
-  procedência vão em OBS Desconto. Vínculo com o insumo: igual ao planilha_fgv.
+  procedência vão em OBS Desconto. Só entram produtos que casam com um insumo
+  do CSV (igual ao planilha_fgv, + ALIAS_INSUMO_MT: "Batata lisa" = batata
+  inglesa, "Couve" = couve manteiga); a lista do Atacadão NÃO é usada aqui.
 - Requer o utilitário pdftotext (poppler-utils) instalado no sistema.
 
 Uso (de dentro de scraper/):
@@ -463,6 +466,16 @@ def preco_kg_mt(r: dict) -> tuple[Optional[float], str]:
     return comum / por_unidade, f"peso médio da embalagem {por_unidade:g} kg"
 
 
+# Nomes do boletim de Cuiabá que não repetem a descrição do insumo.
+FONTE_MT = "https://www.agriculturafamiliar.mt.gov.br/prohort2"
+EXCLUIR_MT = {"alface americana"}  # pedido do usuário: não coletar
+
+ALIAS_INSUMO_MT = {
+    "batata lisa": "BATATA, INGLESA, CRUA",
+    "couve": "COUVE, MANTEIGA, CRUA",
+}
+
+
 def _ler_csv(nome: str) -> list[dict]:
     caminho = os.path.join(config.BASE_DIR, "csv", f"Pesquisa de Precos - Alimentos FNDE Centro-Oeste - {nome}.csv")
     with open(caminho, newline="", encoding="utf-8-sig") as f:
@@ -479,22 +492,34 @@ def montar_coleta_mt(itens: list[dict], data: str) -> tuple[list[str], list[dict
     empresas = [e for e in _ler_csv("Empresas") if e.get("Nome Empresa")]
     desejada = (config.EMPRESA_COLETA or "").strip().casefold()
     empresa = next((e for e in empresas if desejada in e["Nome Empresa"].casefold()), None)
-    if empresa is None:
-        sys.exit("EMPRESA_COLETA não bate com nenhuma empresa de csv/...Empresas.csv")
+    if empresa is None:  # o CSV pode estar desatualizado: lê a aba Empresas (só leitura)
+        try:
+            empresa = planilha_fgv._escolher_empresa(planilha_fgv._conectar())
+        except Exception as e:
+            sys.exit(f"EMPRESA_COLETA não está no CSV de Empresas e a leitura da planilha falhou: {e}")
     pesquisador = (config.PESQUISADOR or "").strip() or next(
         (list(l.values())[0].strip() for l in _ler_csv("Pesquisadores") if list(l.values())[0].strip()), ""
     )
     cabecalho = list(_ler_csv("Coleta")[0].keys())
     linhas, avisos = [], []
     for r in itens:
-        kg, nota = preco_kg_mt(r)
-        if kg is None:
-            avisos.append(f"sem peso na embalagem, fora da coleta: {r['produto']} ({r['embalagem']})")
+        if _norm(r["produto"]) in EXCLUIR_MT:
             continue
-        insumo = planilha_fgv.escolher_insumo(r["produto"], insumos)
+        alias = ALIAS_INSUMO_MT.get(_norm(r["produto"]))
+        insumo = (
+            next((i for i in insumos if i["Descrição"] == alias), None)
+            if alias
+            else planilha_fgv.escolher_insumo(r["produto"], insumos)
+        )
         if insumo is None:
-            avisos.append(f"sem insumo único (colunas de insumo em branco): {r['produto']}")
-        insumo = insumo or {}
+            avisos.append(f"sem insumo na planilha, fora da coleta: {r['produto']}")
+            continue
+        if r["mais_comum"] is None:
+            avisos.append(f"sem cotação no boletim, fora da coleta: {r['produto']}")
+            continue
+        kg, nota = preco_kg_mt(r)
+        if kg is None:  # sem kg: vale o preço da embalagem (mais comum)
+            kg, nota = r["mais_comum"], "preço por embalagem (sem peso em kg)"
         obs = f"CEASA-MT Cuiabá; embalagem {r['embalagem']}; mín R$ {r['min']}; máx R$ {r['max']}; proc. {r['procedencia']}; {nota}"
         campos = {
             "Buscar Empresa": empresa["Busca (dropdown)"],
@@ -506,18 +531,20 @@ def montar_coleta_mt(itens: list[dict], data: str) -> tuple[list[str], list[dict
             "Categoria": insumo.get("Categoria", ""),
             "Grupo de Insumo": insumo.get("Grupo de Insumo", ""),
             "Descrição do insumo": insumo.get("Descrição", ""),
-            "Observações": insumo.get("Observações", ""),
+            "Observações": "; ".join(
+                x for x in (insumo.get("Observações", ""), f"Unidade: {r['embalagem']}") if x
+            ),
             "UF Preço": "MT",
             "Data coleta": data.replace("/", "-"),
             "Pesquisador": pesquisador,
-            "FONTE": "CEASA-MT-CUIABA (boletim em PDF)",
+            "FONTE": FONTE_MT,
             "PRODUTO PESQUISADO": f"{r['produto']} - {r['embalagem']}",
             "Preço PRODUTO": round(r["mais_comum"], 2),
             "OBS Desconto": obs,
             "PREÇO FINAL": round(kg, 2),
         }
         linhas.append({c: campos.get(c, "") for c in cabecalho})
-    linhas.sort(key=lambda l: (l["Código FGV"] == "", l["Descrição do insumo"], l["PREÇO FINAL"]))
+    linhas.sort(key=lambda l: (l["Descrição do insumo"], l["PREÇO FINAL"] == "", l["PREÇO FINAL"] or 0))
     return cabecalho, linhas, avisos
 
 
@@ -554,6 +581,27 @@ def enviar_para_sheets(itens: list[dict], campos: list[str]) -> None:
     )
 
 
+def enviar_coleta_mt(linhas: list[dict], cabecalho: list[str]) -> None:
+    """Grava na aba própria (nome do .env) como VALORES, igual ao planilha_fgv."""
+    import gspread
+    import planilha_fgv
+
+    if not planilha_fgv.nome_aba_valido():
+        return
+    planilha = planilha_fgv._conectar()
+    nome = config.GOOGLE_SHEETS_WORKSHEET_NAME.strip()
+    valores = [cabecalho] + [[l[c] for c in cabecalho] for l in linhas]
+    try:
+        aba = planilha.worksheet(nome)
+        aba.clear()
+    except gspread.WorksheetNotFound:
+        aba = planilha.add_worksheet(title=nome, rows=len(valores) + 50, cols=len(cabecalho))
+    if aba.row_count < len(valores):
+        aba.resize(rows=len(valores) + 50)
+    aba.update(values=valores, range_name="A1", value_input_option="RAW")
+    print(f"Aba '{nome}' atualizada com {len(linhas)} linhas.")
+
+
 def main() -> None:
     argv = sys.argv[1:]
     if "--aba" in argv:  # nome da aba sem mexer no .env
@@ -568,7 +616,7 @@ def main() -> None:
     texto = _texto_pdf(pdf)
     if "Central de Abastecimento de Cuiabá" in texto:
         registros, data, avisos = extrair_mt(texto)
-        itens = filtrar_lista_atacadao(registros)
+        itens = registros  # a seleção é pelos Insumos (montar_coleta_mt), não pela lista do Atacadão
         cabecalho, linhas, avisos_coleta = montar_coleta_mt(itens, data)
         dia = data.replace("/", "-") or "sem-data"
         os.makedirs(os.path.join(config.BASE_DIR, "exports"), exist_ok=True)
@@ -578,13 +626,13 @@ def main() -> None:
             w.writeheader()
             w.writerows(linhas)
         print(
-            f"{len(registros)} produtos no PDF; {len(itens)} na lista do Atacadão; "
+            f"{len(registros)} produtos no PDF; "
             f"{len(linhas)} linhas no formato Coleta -> {destino}"
         )
         for a in avisos + avisos_coleta:
             print("AVISO:", a)
         if "--sheets" in sys.argv:
-            enviar_para_sheets(linhas, cabecalho)
+            enviar_coleta_mt(linhas, cabecalho)
         return
     if "BOLETIM INFORMATIVO" in texto:
         cidade, campos = "poa", CAMPOS_POA
