@@ -26,11 +26,22 @@ Dois formatos (detectados pelo texto do PDF):
   preco_kg=mais_frequente só quando UND é KG e há cotação. Preço 0.00 = sem
   cotação no dia: a linha é mantida com os valores do PDF, sem preco_kg.
   Só as seções "VERDURAS E LEGUMES" e "FRUTAS" entram.
+- CEASA-MT Cuiabá ("Boletim Informativo de Preços", CEASA-MT-CUIABA-*.pdf):
+  Produto | Unidades | Procedência | Mínimo | Mais comum | Máximo, preço por
+  EMBALAGEM ("Cx. (18 a 20Kg)", "Un. (250 a 300g)", "Dz."). Saída no formato da
+  aba Coleta da planilha (planilha_fgv.py), não nos campos do PDF: empresa,
+  pesquisador e insumos vêm dos CSVs em ../csv/ (cópias das abas da planilha);
+  Preço PRODUTO = mais comum da embalagem, PREÇO FINAL = R$/kg (peso médio da
+  faixa da embalagem; "dz." com peso por unidade = 12 x peso). Sem peso (Dz.,
+  Mç., bandeja, ovos) não há R$/kg e a linha fica de fora (AVISO). Melancia
+  ("Un. (11 a15Kg)" a R$ 2,50) é preço por kg, não por unidade. Mín/máx e
+  procedência vão em OBS Desconto. Vínculo com o insumo: igual ao planilha_fgv.
 - Requer o utilitário pdftotext (poppler-utils) instalado no sistema.
 
 Uso (de dentro de scraper/):
     python ceasa_pdf.py ../CEASA/cotacao-POA-24-09.pdf            # só CSV
     python ceasa_pdf.py ../CEASA/cotacao-POA-24-09.pdf --sheets   # CSV + Sheets
+    python ceasa_pdf.py ../CEASA/CEASA-MT-CUIABA-05.09.pdf        # CSV no formato Coleta
     python ceasa_pdf.py <pdf> --sheets --aba "PR - CEASA 24-09"    # outra aba que a do .env
 
 Com --sheets, a aba é a de GOOGLE_SHEETS_WORKSHEET_NAME (.env) e é SOBRESCRITA;
@@ -365,6 +376,151 @@ def extrair_rs(texto: str) -> tuple[list[dict], str, list[str]]:
     return registros, data, avisos
 
 
+_RE_PRECO_MT = r"(\d+(?:\.\d{3})*,\d{2}|-{3,})"
+_RE_LINHA_MT = re.compile(rf"^(?P<texto>.*?)\s*{_RE_PRECO_MT}\s+{_RE_PRECO_MT}\s+{_RE_PRECO_MT}\s*$")
+_RE_FAIXA_PESO = re.compile(
+    r"(\d+(?:,\d+)?)\s*(?:a\s*(\d+(?:,\d+)?))?\s*(kg|g)\b", re.IGNORECASE
+)
+
+
+def _peso_medio_kg(trecho: str) -> Optional[float]:
+    """Peso médio (kg) da primeira faixa "18 a 20Kg" / "250 a 300g" / "5Kg"."""
+    m = _RE_FAIXA_PESO.search(trecho)
+    if not m:
+        return None
+    a = float(m.group(1).replace(",", "."))
+    b = float(m.group(2).replace(",", ".")) if m.group(2) else a
+    kg = (a + b) / 2
+    return kg / 1000 if m.group(3).lower() == "g" else kg
+
+
+def _preco_mt(texto: str) -> Optional[float]:
+    return None if texto.startswith("-") else _num(texto)
+
+
+def extrair_mt(texto: str) -> tuple[list[dict], str, list[str]]:
+    """Formato CEASA-MT Cuiabá. Devolve (registros, data, avisos).
+
+    O pdftotext quebra 3 linhas: abacaxi graúdo (variedade com preços e o nome
+    na linha de baixo) e banana nanica (procedência com preços e o nome embaixo).
+    """
+    registros, avisos = [], []
+    m = re.search(r"PERÍODO de (\d{2}) a \d{2}\.(\d{2}\.\d{4})", texto)
+    data = f"{m.group(1)}/{m.group(2).replace('.', '/')}" if m else ""
+    linhas = [l for l in texto.splitlines() if l.strip()]
+    for i, linha in enumerate(linhas):
+        m = _RE_LINHA_MT.match(linha)
+        if not m or "MÍNIMO" in linha:
+            continue
+        segs = [s for s in re.split(r"\s{2,}", m.group("texto").strip()) if s]
+        if len(segs) == 3:
+            nome, und, proc = segs
+            variedade = re.match(r"(.+?)\s*(\(dz\.\))$", und)  # abacaxi médio
+            if variedade:
+                nome, und = f"{nome} {variedade.group(1)}", variedade.group(2)
+        elif len(segs) == 1 and i + 1 < len(linhas):
+            prox = [s for s in re.split(r"\s{2,}", linhas[i + 1].strip()) if s]
+            if len(prox) < 2 or _RE_LINHA_MT.match(linhas[i + 1]):
+                avisos.append(f"linha não reconhecida: {linha.strip()}")
+                continue
+            nome, und = prox[0], prox[1]
+            if re.fullmatch(r"[A-Z/ ]+", segs[0]):  # banana nanica
+                proc = segs[0]
+            else:  # abacaxi: a variedade aparece antes do nome
+                nome, proc = f"{nome} {segs[0]}", prox[2] if len(prox) > 2 else ""
+        else:
+            avisos.append(f"linha não reconhecida: {linha.strip()}")
+            continue
+        minimo, comum, maximo = (_preco_mt(g) for g in m.group(2, 3, 4))
+        registros.append(
+            {
+                "secao": "",
+                "produto": re.sub(r"\s+", " ", nome).strip(),
+                "embalagem": und.strip(),
+                "procedencia": proc.strip(),
+                "min": minimo,
+                "mais_comum": comum,
+                "max": maximo,
+            }
+        )
+    return registros, data, avisos
+
+
+def preco_kg_mt(r: dict) -> tuple[Optional[float], str]:
+    """(R$/kg, nota) do registro de Cuiabá; None quando a embalagem não tem peso."""
+    comum = r["mais_comum"]
+    if comum is None:
+        return None, ""
+    und = r["embalagem"]
+    por_unidade = _peso_medio_kg(und)
+    if por_unidade is None:  # abacaxi: peso por unidade no nome, embalagem em dz.
+        por_unidade = _peso_medio_kg(r["produto"])
+        if por_unidade is not None and "dz" in und.lower():
+            return comum / (12 * por_unidade), "dz. = 12 un. x peso médio"
+        return None, ""
+    if und.lower().startswith("un") and por_unidade >= 5:
+        return comum, "preço já é por kg (melancia vendida por unidade pesada)"
+    return comum / por_unidade, f"peso médio da embalagem {por_unidade:g} kg"
+
+
+def _ler_csv(nome: str) -> list[dict]:
+    caminho = os.path.join(config.BASE_DIR, "csv", f"Pesquisa de Precos - Alimentos FNDE Centro-Oeste - {nome}.csv")
+    with open(caminho, newline="", encoding="utf-8-sig") as f:
+        return list(csv.DictReader(f))
+
+
+def montar_coleta_mt(itens: list[dict], data: str) -> tuple[list[str], list[dict], list[str]]:
+    """Linhas no formato da aba Coleta (ver planilha_fgv.py). Devolve (cabeçalho, linhas, avisos)."""
+    import planilha_fgv
+
+    insumos = [i for i in _ler_csv("Insumos") if i.get("Descrição")]
+    for i in insumos:
+        i["_palavras"] = planilha_fgv._palavras(i["Descrição"])
+    empresas = [e for e in _ler_csv("Empresas") if e.get("Nome Empresa")]
+    desejada = (config.EMPRESA_COLETA or "").strip().casefold()
+    empresa = next((e for e in empresas if desejada in e["Nome Empresa"].casefold()), None)
+    if empresa is None:
+        sys.exit("EMPRESA_COLETA não bate com nenhuma empresa de csv/...Empresas.csv")
+    pesquisador = (config.PESQUISADOR or "").strip() or next(
+        (list(l.values())[0].strip() for l in _ler_csv("Pesquisadores") if list(l.values())[0].strip()), ""
+    )
+    cabecalho = list(_ler_csv("Coleta")[0].keys())
+    linhas, avisos = [], []
+    for r in itens:
+        kg, nota = preco_kg_mt(r)
+        if kg is None:
+            avisos.append(f"sem peso na embalagem, fora da coleta: {r['produto']} ({r['embalagem']})")
+            continue
+        insumo = planilha_fgv.escolher_insumo(r["produto"], insumos)
+        if insumo is None:
+            avisos.append(f"sem insumo único (colunas de insumo em branco): {r['produto']}")
+        insumo = insumo or {}
+        obs = f"CEASA-MT Cuiabá; embalagem {r['embalagem']}; mín R$ {r['min']}; máx R$ {r['max']}; proc. {r['procedencia']}; {nota}"
+        campos = {
+            "Buscar Empresa": empresa["Busca (dropdown)"],
+            "CNPJ": empresa["CNPJ"],
+            "Nome Empresa": empresa["Nome Empresa"],
+            "UF Empresa": empresa["UF Empresa"],
+            "Buscar Insumo": insumo.get("Busca (dropdown)", ""),
+            "Código FGV": insumo.get("Código do Insumo", ""),
+            "Categoria": insumo.get("Categoria", ""),
+            "Grupo de Insumo": insumo.get("Grupo de Insumo", ""),
+            "Descrição do insumo": insumo.get("Descrição", ""),
+            "Observações": insumo.get("Observações", ""),
+            "UF Preço": "MT",
+            "Data coleta": data.replace("/", "-"),
+            "Pesquisador": pesquisador,
+            "FONTE": "CEASA-MT-CUIABA (boletim em PDF)",
+            "PRODUTO PESQUISADO": f"{r['produto']} - {r['embalagem']}",
+            "Preço PRODUTO": round(r["mais_comum"], 2),
+            "OBS Desconto": obs,
+            "PREÇO FINAL": round(kg, 2),
+        }
+        linhas.append({c: campos.get(c, "") for c in cabecalho})
+    linhas.sort(key=lambda l: (l["Código FGV"] == "", l["Descrição do insumo"], l["PREÇO FINAL"]))
+    return cabecalho, linhas, avisos
+
+
 def filtrar_lista_atacadao(registros: list[dict]) -> list[dict]:
     palavras = _classificar_palavras()
     saida = []
@@ -410,6 +566,26 @@ def main() -> None:
     pdf = args[0]
 
     texto = _texto_pdf(pdf)
+    if "Central de Abastecimento de Cuiabá" in texto:
+        registros, data, avisos = extrair_mt(texto)
+        itens = filtrar_lista_atacadao(registros)
+        cabecalho, linhas, avisos_coleta = montar_coleta_mt(itens, data)
+        dia = data.replace("/", "-") or "sem-data"
+        os.makedirs(os.path.join(config.BASE_DIR, "exports"), exist_ok=True)
+        destino = os.path.join(config.BASE_DIR, "exports", f"ceasa_cuiaba_{dia}.csv")
+        with open(destino, "w", newline="", encoding="utf-8-sig") as f:
+            w = csv.DictWriter(f, fieldnames=cabecalho, delimiter=";")
+            w.writeheader()
+            w.writerows(linhas)
+        print(
+            f"{len(registros)} produtos no PDF; {len(itens)} na lista do Atacadão; "
+            f"{len(linhas)} linhas no formato Coleta -> {destino}"
+        )
+        for a in avisos + avisos_coleta:
+            print("AVISO:", a)
+        if "--sheets" in sys.argv:
+            enviar_para_sheets(linhas, cabecalho)
+        return
     if "BOLETIM INFORMATIVO" in texto:
         cidade, campos = "poa", CAMPOS_POA
         registros, data, avisos = extrair_rs(texto)
