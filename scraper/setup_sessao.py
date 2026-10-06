@@ -14,6 +14,7 @@ SITES = {
     # "asun": "https://www.levemaisonline.com.br/",
     # "fort": "https://www.fortatacadista.com.br/",
     # "gimba": "https://www.gimba.com.br/",
+    # "ifood": "https://www.ifood.com.br/delivery/canoas-rs/macromix--express-canoas-marechal-rondon/f711ef9e-6eef-4c32-8fdc-f368671bb6b9",
 }
 
 
@@ -26,10 +27,7 @@ def main():
             headless=False,
             locale="pt-BR",
             viewport={"width": 1366, "height": 900},
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-            ),
+            **config.opcoes_navegador(),
         )
 
         for nome, url in SITES.items():
@@ -38,6 +36,12 @@ def main():
 
             print("\n" + "=" * 70)
             print(f"[{nome}] Uma janela do navegador foi aberta em: {url}")
+            if nome == "ifood":
+                print(
+                    "   IFOOD: o Cloudflare/PerimeterX bloqueia o bot. Resolva o "
+                    "desafio 'Um momento…' na mão, informe o endereço de entrega "
+                    "(Canoas/RS) e confirme que a loja Macromix mostra os produtos."
+                )
             if nome == "gimba":
                 print(
                     "   GIMBA: não tem CEP. Clique em 'Olá, faça login', entre com a "

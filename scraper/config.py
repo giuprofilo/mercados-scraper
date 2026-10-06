@@ -16,6 +16,29 @@ HEADLESS = True
 NAV_TIMEOUT_MS = 45_000
 SLOW_MO_MS = 0
 
+# Navegador usado no perfil persistente (setup_sessao.py E coleta devem usar o
+# mesmo, senão o cf_clearance do Cloudflare não vale). "chrome" = Google Chrome
+# instalado na máquina (necessário p/ o iFood); None = Chromium do Playwright.
+# Com "chrome" o user-agent não é forçado (usa o real do navegador) e a flag
+# --enable-automation é removida. Ao trocar, apague credentials/perfil_atacadao.
+NAVEGADOR_CANAL = "chrome"
+
+
+def opcoes_navegador() -> dict:
+    """Argumentos extras do launch_persistent_context conforme NAVEGADOR_CANAL."""
+    if NAVEGADOR_CANAL:
+        return {
+            "channel": NAVEGADOR_CANAL,
+            "ignore_default_args": ["--enable-automation"],
+        }
+    return {
+        "user_agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        )
+    }
+
+
 USAR_SESSAO_SALVA = True
 PERFIL_NAVEGADOR_DIR = os.path.join(BASE_DIR, "credentials", "perfil_atacadao")
 
@@ -32,5 +55,5 @@ GOOGLE_SHEETS_SPREADSHEET_ID = os.environ.get("GOOGLE_SHEETS_SPREADSHEET_ID")
 GOOGLE_SHEETS_WORKSHEET_NAME = os.environ.get("GOOGLE_SHEETS_WORKSHEET_NAME", "Coleta")
 
 # Screenshots de Produtos
-SALVAR_PRINTS_ITENS = True
+SALVAR_PRINTS_ITENS = False
 PRINTS_DIR = os.path.join(BASE_DIR, "screenshots")

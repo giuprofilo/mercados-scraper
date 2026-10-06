@@ -44,10 +44,7 @@ def executar_coletas(
                 slow_mo=config.SLOW_MO_MS,
                 locale="pt-BR",
                 viewport={"width": 1366, "height": 900},
-                user_agent=(
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                    "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-                ),
+                **config.opcoes_navegador(),
             )
             page = context.pages[0] if context.pages else context.new_page()
         else:
