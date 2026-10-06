@@ -52,7 +52,13 @@ GOOGLE_SHEETS_CREDENTIALS_PATH = os.path.join(
     BASE_DIR, "credentials", "google_service_account.json"
 )
 GOOGLE_SHEETS_SPREADSHEET_ID = os.environ.get("GOOGLE_SHEETS_SPREADSHEET_ID")
-GOOGLE_SHEETS_WORKSHEET_NAME = os.environ.get("GOOGLE_SHEETS_WORKSHEET_NAME", "Coleta")
+# Nome da aba NOVA desta coleta (apagada/reescrita a cada execução; as abas
+# originais da planilha são recusadas). Troque a cada coleta.
+GOOGLE_SHEETS_WORKSHEET_NAME = os.environ.get("GOOGLE_SHEETS_WORKSHEET_NAME")
+# Empresa pesquisada (nome ou parte do nome na aba Empresas) e pesquisador
+# (vazio = 1º nome da aba Pesquisadores).
+EMPRESA_COLETA = os.environ.get("EMPRESA_COLETA")
+PESQUISADOR = os.environ.get("PESQUISADOR")
 
 # Screenshots de Produtos
 SALVAR_PRINTS_ITENS = False

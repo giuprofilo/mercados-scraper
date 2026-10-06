@@ -6,6 +6,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 import config as config
+import planilha_fgv
 from database import get_connection, init_db
 
 if TYPE_CHECKING:
@@ -74,7 +75,7 @@ def _pronto_para_sincronizar() -> bool:
         )
         return False
 
-    return True
+    return planilha_fgv.nome_aba_valido()
 
 
 def _enviar_linhas(linhas: list[list]) -> None:
@@ -89,11 +90,10 @@ def _enviar_linhas(linhas: list[list]) -> None:
 
 def sincronizar_produtos(produtos: "list[Produto]") -> None:
     """
-    Manda só os produtos passados (normalmente a coleta que acabou de
-    rodar) direto pra planilha, sem passar pelo SQLite. A planilha é
-    sobrescrita por completo a cada chamada — ou seja, ela sempre reflete
-    só a última coleta, não o histórico inteiro. É o que main.py chama
-    por padrão.
+    Manda a coleta que acabou de rodar para uma aba própria (nome em
+    GOOGLE_SHEETS_WORKSHEET_NAME) da planilha de pesquisa, no formato da aba
+    "Coleta". A aba é limpa e reescrita a cada execução. Detalhes do formato
+    e do vínculo produto -> insumo em planilha_fgv.py. É o que main.py chama.
     """
     if not _pronto_para_sincronizar():
         return
@@ -102,11 +102,8 @@ def sincronizar_produtos(produtos: "list[Produto]") -> None:
         logger.warning("Nenhum produto coletado para sincronizar.")
         return
 
-    linhas = [_CAMPOS_PRODUTO]
-    for p in produtos:
-        linhas.append([getattr(p, campo) for campo in _CAMPOS_PRODUTO])
-
-    _enviar_linhas(linhas)
+    logger.info("Conectando ao Google Sheets...")
+    planilha_fgv.enviar_coleta(produtos)
 
 
 def _buscar_todos_os_registros() -> list[sqlite3.Row]:
