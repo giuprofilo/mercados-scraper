@@ -56,9 +56,6 @@ TAREFAS_ASUN = [
         "palavras_chave": [
             "peito",
             "coxa",
-            "sobrecoxa",
-            "sassami",
-            "filézinho",
             "filé",
         ],
     },
@@ -72,8 +69,6 @@ TAREFAS_ASUN = [
             "moída",
             "músculo",
             "fígado",
-            "dianteiro",
-            "paleta",
         ],
     },
     {
@@ -124,6 +119,7 @@ TAREFAS_ASUN = [
             "couve flor",
             "espinafre",
             "brócolis",
+            "brocolis",
             "chicória",
             "salsa",
             "cheiro verde",

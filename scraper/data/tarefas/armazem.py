@@ -77,7 +77,7 @@ _VERDURAS = [
     "salsinha",
     "cheiro verde",
 ]
-_AVES = ["peito", "coxa", "sobrecoxa", "filé"]
+_AVES = ["peito", "coxa", "filé"]
 _BOVINA = [
     "acém",
     "moído",
@@ -89,8 +89,6 @@ _BOVINA = [
     "musculo",
     "fígado",
     "figado",
-    "dianteiro",
-    "paleta",
 ]
 _SUINA = ["lombo", "copa lombo"]
 _FERMENTOS = [

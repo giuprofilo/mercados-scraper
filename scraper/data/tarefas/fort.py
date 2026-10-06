@@ -61,9 +61,6 @@ TAREFAS_FORT = [
         "palavras_chave": [
             "peito",
             "coxa",
-            "sobrecoxa",
-            "sassami",
-            "filézinho",
             "filé",
         ],
     },
@@ -77,8 +74,6 @@ TAREFAS_FORT = [
             "moída",
             "músculo",
             "fígado",
-            "dianteiro",
-            "paleta",
         ],
     },
     {

@@ -14,7 +14,7 @@ Coletar, para 1 URL de categoria com produtos (e 1 com promoção, se possível)
 - **Card**: seletor do card, nome, preço atual, preço riscado, badge de desconto, preço atacado, unidade ("/kg"), link, id estável.
 - **Indisponível**: como aparece (sem "R$", texto "Indisponível").
 - **Paginação**: tipo (tabela em `03-requisitos-dos-scrapers.md`), itens por página, onde está o total.
-- **Anti-bot / login**: se houver, não automatizar; usar `setup_sessao.py` (sessão manual salva no perfil).
+- **Anti-bot / login**: se houver, pode automatizar, mas deixar o usuario ciente; ou usar `setup_sessao.py` (sessão manual salva no perfil).
 
 Como obter o HTML/JSON real:
 ```bash

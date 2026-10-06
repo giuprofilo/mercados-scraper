@@ -21,7 +21,6 @@ _B = "https://www.rappi.com.br/lojas/900637167-assaiatacadista-nc"
 _FRUTAS = [
     "abacate",
     "abacaxi",
-    "banana",
     "bergamota",
     "goiaba",
     "laranja",
@@ -47,29 +46,20 @@ _LEGUMES = [
     "abobora",
     "abobrinha",
     "aipim",
-    "alho",
-    "batata",
-    "batata doce",
-    "batata inglesa",
     "batata baroa",
+    "batata-salsa",
     "berinjela",
     "beterraba",
-    "cebola",
-    "cenoura",
-    "chuchu",
     "inhame",
     "mandioca",
+    "mandioquinha",
     "milho",
-    "pimentão",
-    "pimentao",
-    "tomate",
     "vagem",
 ]
 _VERDURAS = [
     "acelga",
     "agrião",
     "agriao",
-    "alface",
     "couve",
     "couve chinesa",
     "couve flor",
@@ -82,20 +72,18 @@ _VERDURAS = [
     "salsinha",
     "cheiro verde",
 ]
-_AVES = ["peito", "coxa", "sobrecoxa", "filé"]
 _BOVINA = [
     "acém",
     "moído",
     "moída",
     "músculo",
     "fígado",
+    "peito",
     "acem",
     "moido",
     "moida",
     "musculo",
     "figado",
-    "dianteiro",
-    "paleta",
 ]
 _SUINA = ["lombo", "copa lombo"]
 _FERMENTOS = [
@@ -177,12 +165,6 @@ TAREFAS_RAPPI = [
     # --- Açougue ---
     {
         "fornecedor": "rappi",
-        "categoria": "Aves",
-        "url": f"{_B}/acougue-e-peixaria/aves",
-        "palavras_chave": _AVES,
-    },
-    {
-        "fornecedor": "rappi",
         "categoria": "Carne bovina",
         "url": f"{_B}/acougue-e-peixaria/bovinos",
         "palavras_chave": _BOVINA,
@@ -203,7 +185,7 @@ TAREFAS_RAPPI = [
         "fornecedor": "rappi",
         "categoria": "Peixes",
         "url": f"{_B}/s?term=pescada",
-        "palavras_chave": ["pescada", "polaca"],
+        "palavras_chave": ["pescada"],
     },
     # --- Hortifruti ---
     {
