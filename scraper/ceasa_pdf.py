@@ -39,12 +39,19 @@ Dois formatos (detectados pelo texto do PDF):
   procedência vão em OBS Desconto. Só entram produtos que casam com um insumo
   do CSV (igual ao planilha_fgv, + ALIAS_INSUMO_MT: "Batata lisa" = batata
   inglesa, "Couve" = couve manteiga); a lista do Atacadão NÃO é usada aqui.
+- CEASA-DF ("COTAÇÕES DE PREÇOS NO ATACADO", CEASA-DF-*.pdf): Produtos/Variedades |
+  Unidade de comercialização | Preço mínimo | Preço + comum | Preço máximo, preço
+  por EMBALAGEM ("Cx- 18 a 20 kg.", "Mç- 0,3 a 0,4 kg.", "1 kg."). Mesmo formato
+  de saída e mesmas regras do MT (insumos do CSV, PREÇO FINAL = R$/kg pelo peso
+  médio da faixa; sem peso = preço da embalagem). FONTE = FONTE_DF. Linhas sem
+  cotação (vazias ou 0,00) ficam fora. Seções: hortaliças, frutas, ovos, diversos.
 - Requer o utilitário pdftotext (poppler-utils) instalado no sistema.
 
 Uso (de dentro de scraper/):
     python ceasa_pdf.py ../CEASA/cotacao-POA-24-09.pdf            # só CSV
     python ceasa_pdf.py ../CEASA/cotacao-POA-24-09.pdf --sheets   # CSV + Sheets
     python ceasa_pdf.py ../CEASA/CEASA-MT-CUIABA-05.09.pdf        # CSV no formato Coleta
+    python ceasa_pdf.py ../CEASA/CEASA-DF-05-10.pdf --sheets --aba "DF - CEASA 05-10"
     python ceasa_pdf.py <pdf> --sheets --aba "PR - CEASA 24-09"    # outra aba que a do .env
 
 Com --sheets, a aba é a de GOOGLE_SHEETS_WORKSHEET_NAME (.env) e é SOBRESCRITA;
@@ -466,13 +473,104 @@ def preco_kg_mt(r: dict) -> tuple[Optional[float], str]:
     return comum / por_unidade, f"peso médio da embalagem {por_unidade:g} kg"
 
 
+_RE_LINHA_DF = re.compile(
+    r"^(?P<texto>.+?)(?P<precos>(?:\s+\d+(?:\.\d{3})*,\d{2}){3})?\s*$"
+)
+_RE_FAIXA_DF = re.compile(
+    r"(\d+(?:,\d+)?)\s*(?:(?:a|-)\s*(\d+(?:,\d+)?))?\s*(kg|g)\b", re.IGNORECASE
+)
+_CABECALHO_DF = ("produtos/variedades", "unidade de co", "mercializacao", "comum", "governo",
+                 "seagri", "desenvolvimento", "centrais", "gerencia", "secao de", "cotacoes")
+
+
+def _peso_medio_df(unidade: str) -> Optional[float]:
+    """Peso médio (kg) da faixa da unidade ("Cx- 18 a 20 kg", "Mç- 0.4 a 0.6 kg",
+    "Cxta- 4 - 6 kg", "Cx- (50dzs) 4 kg", "1 kg"); None se não houver peso."""
+    texto = re.sub(r"(?<=\d)\.(?=\d)", ",", unidade.replace("–", "-"))
+    m = _RE_FAIXA_DF.search(texto)
+    if not m:
+        return None
+    a = float(m.group(1).replace(",", "."))
+    b = float(m.group(2).replace(",", ".")) if m.group(2) else a
+    kg = (a + b) / 2
+    return kg / 1000 if m.group(3).lower() == "g" else kg
+
+
+def extrair_df(texto: str) -> tuple[list[dict], str, list[str]]:
+    """Formato CEASA-DF. Devolve (registros, data, avisos). Mesmos campos do MT
+    (produto, embalagem, procedencia vazia, min, mais_comum, max)."""
+    registros, avisos = [], []
+    m = re.search(r"DATA\s*[–-]\s*(\d{2})\.(\d{2})\.(\d{4})", texto)
+    data = "/".join(m.groups()) if m else ""
+    secao = ""
+    for linha in texto.splitlines():
+        if not linha.strip() or any(c in _norm(linha) for c in _CABECALHO_DF):
+            continue
+        m = _RE_LINHA_DF.match(linha.strip())
+        segs = [s for s in re.split(r"\s{2,}", m.group("texto").strip()) if s] if m else []
+        if len(segs) == 1 and not m.group("precos"):
+            secao = _norm(segs[0])
+            continue
+        if len(segs) != 2:
+            avisos.append(f"linha não reconhecida: {linha.strip()}")
+            continue
+        precos = [_num(p) for p in (m.group("precos") or "").split()]
+        # 0,00 = sem cotação (ex.: alho importado)
+        minimo, comum, maximo = ([p or None for p in precos] + [None] * 3)[:3]
+        registros.append(
+            {
+                "secao": secao,
+                "produto": segs[0],
+                "embalagem": segs[1],
+                "procedencia": "",
+                "min": minimo,
+                "mais_comum": comum,
+                "max": maximo,
+            }
+        )
+    return registros, data, avisos
+
+
+def preco_kg_df(r: dict) -> tuple[Optional[float], str]:
+    """(R$/kg, nota) do registro do DF; None quando a unidade não tem peso."""
+    comum = r["mais_comum"]
+    peso = _peso_medio_df(r["embalagem"])
+    if comum is None or peso is None:
+        return None, ""
+    return comum / peso, f"peso médio da embalagem {peso:g} kg"
+
+
 # Nomes do boletim de Cuiabá que não repetem a descrição do insumo.
 FONTE_MT = "https://www.agriculturafamiliar.mt.gov.br/prohort2"
-EXCLUIR_MT = {"alface americana"}  # pedido do usuário: não coletar
+FONTE_DF = "https://www.portal.ceasadf.com.br/informacao-mercado"
+EXCLUIR_MT = {"alface americana"}  # pedido do usuário: não coletar (vale para MT e DF)
 
 ALIAS_INSUMO_MT = {
     "batata lisa": "BATATA, INGLESA, CRUA",
     "couve": "COUVE, MANTEIGA, CRUA",
+}
+# Variedades do boletim do DF que o casamento por palavra confundiria com outro insumo
+# (o insumo é uma variedade específica: cabotian, tahiti, formosa, palmer, fuji, branco...).
+EXCLUIR_DF = EXCLUIR_MT | {
+    "abobora moranga", "abobora seca ou madura", "alho porro", "cebola roxa",
+    "cajamanga", "caja-manga", "limao siciliano", "mamao havaiano", "manga tommy atkins",
+    "manga espada", "manga haden", "maca gala cat-1 tp-90 a 135", "maca gala (solta)",
+    "maca red delicious 113 a 135", "maca granny smith", "melao orange",
+    "pera d'anjou 100 a 120", "pera d\u2019anjou 100 a 120", "ovos de codorna",
+    "repolho roxo", "salsao (aipo)", "tomate cereja", "tomate italiano",
+}  # fmt: skip
+
+# Nomes do boletim do DF (aliases exatos, normalizados) e prefixos de variedade.
+ALIAS_INSUMO_DF = {
+    "batata lisa especial/extra": "BATATA, INGLESA, CRUA",
+    "batata lisa primeira/diversa": "BATATA, INGLESA, CRUA",
+    "couve manteiga": "COUVE, MANTEIGA, CRUA",
+    "alface lisa/crespa": "ALFACE, LISA, CRUA",
+    "ovos de galinha branco extra": "OVO, DE GALINHA, INTEIRO, CRU",
+    "ovos de galinha branco grande": "OVO, DE GALINHA, INTEIRO, CRU",
+    "ovos de galinha branco medio": "OVO, DE GALINHA, INTEIRO, CRU",
+    "ovos de galinha vermelho extra": "OVO, DE GALINHA, INTEIRO, CRU",
+    "ovos de galinha vermelho grande": "OVO, DE GALINHA, INTEIRO, CRU",
 }
 
 
@@ -482,10 +580,23 @@ def _ler_csv(nome: str) -> list[dict]:
         return list(csv.DictReader(f))
 
 
-def montar_coleta_mt(itens: list[dict], data: str) -> tuple[list[str], list[dict], list[str]]:
+def montar_coleta_mt(
+    itens: list[dict],
+    data: str,
+    uf: str = "MT",
+    fonte: str = "",
+    rotulo: str = "CEASA-MT Cuiabá",
+    alias_insumo: Optional[dict] = None,
+    calcular_kg=None,
+    excluir: Optional[set] = None,
+) -> tuple[list[str], list[dict], list[str]]:
     """Linhas no formato da aba Coleta (ver planilha_fgv.py). Devolve (cabeçalho, linhas, avisos)."""
     import planilha_fgv
 
+    fonte = fonte or FONTE_MT
+    alias_insumo = ALIAS_INSUMO_MT if alias_insumo is None else alias_insumo
+    calcular_kg = calcular_kg or preco_kg_mt
+    excluir = EXCLUIR_MT if excluir is None else excluir
     insumos = [i for i in _ler_csv("Insumos") if i.get("Descrição")]
     for i in insumos:
         i["_palavras"] = planilha_fgv._palavras(i["Descrição"])
@@ -503,9 +614,9 @@ def montar_coleta_mt(itens: list[dict], data: str) -> tuple[list[str], list[dict
     cabecalho = list(_ler_csv("Coleta")[0].keys())
     linhas, avisos = [], []
     for r in itens:
-        if _norm(r["produto"]) in EXCLUIR_MT:
+        if _norm(r["produto"]) in excluir:
             continue
-        alias = ALIAS_INSUMO_MT.get(_norm(r["produto"]))
+        alias = alias_insumo.get(_norm(r["produto"]))
         insumo = (
             next((i for i in insumos if i["Descrição"] == alias), None)
             if alias
@@ -517,10 +628,13 @@ def montar_coleta_mt(itens: list[dict], data: str) -> tuple[list[str], list[dict
         if r["mais_comum"] is None:
             avisos.append(f"sem cotação no boletim, fora da coleta: {r['produto']}")
             continue
-        kg, nota = preco_kg_mt(r)
+        kg, nota = calcular_kg(r)
         if kg is None:  # sem kg: vale o preço da embalagem (mais comum)
             kg, nota = r["mais_comum"], "preço por embalagem (sem peso em kg)"
-        obs = f"CEASA-MT Cuiabá; embalagem {r['embalagem']}; mín R$ {r['min']}; máx R$ {r['max']}; proc. {r['procedencia']}; {nota}"
+        obs = f"{rotulo}; embalagem {r['embalagem']}; mín R$ {r['min']}; máx R$ {r['max']}"
+        if r["procedencia"]:
+            obs += f"; proc. {r['procedencia']}"
+        obs += f"; {nota}"
         campos = {
             "Buscar Empresa": empresa["Busca (dropdown)"],
             "CNPJ": empresa["CNPJ"],
@@ -534,10 +648,10 @@ def montar_coleta_mt(itens: list[dict], data: str) -> tuple[list[str], list[dict
             "Observações": "; ".join(
                 x for x in (insumo.get("Observações", ""), f"Unidade: {r['embalagem']}") if x
             ),
-            "UF Preço": "MT",
+            "UF Preço": uf,
             "Data coleta": data.replace("/", "-"),
             "Pesquisador": pesquisador,
-            "FONTE": FONTE_MT,
+            "FONTE": fonte,
             "PRODUTO PESQUISADO": f"{r['produto']} - {r['embalagem']}",
             "Preço PRODUTO": round(r["mais_comum"], 2),
             "OBS Desconto": obs,
@@ -614,13 +728,21 @@ def main() -> None:
     pdf = args[0]
 
     texto = _texto_pdf(pdf)
-    if "Central de Abastecimento de Cuiabá" in texto:
-        registros, data, avisos = extrair_mt(texto)
-        itens = registros  # a seleção é pelos Insumos (montar_coleta_mt), não pela lista do Atacadão
-        cabecalho, linhas, avisos_coleta = montar_coleta_mt(itens, data)
+    if "Central de Abastecimento de Cuiabá" in texto or "CEASA/DF" in texto:
+        if "CEASA/DF" in texto:
+            registros, data, avisos = extrair_df(texto)
+            cidade = "df"
+            cabecalho, linhas, avisos_coleta = montar_coleta_mt(
+                registros, data, "DF", FONTE_DF, "CEASA-DF", ALIAS_INSUMO_DF, preco_kg_df, EXCLUIR_DF
+            )
+        else:
+            registros, data, avisos = extrair_mt(texto)
+            cidade = "cuiaba"
+            # a seleção é pelos Insumos (montar_coleta_mt), não pela lista do Atacadão
+            cabecalho, linhas, avisos_coleta = montar_coleta_mt(registros, data)
         dia = data.replace("/", "-") or "sem-data"
         os.makedirs(os.path.join(config.BASE_DIR, "exports"), exist_ok=True)
-        destino = os.path.join(config.BASE_DIR, "exports", f"ceasa_cuiaba_{dia}.csv")
+        destino = os.path.join(config.BASE_DIR, "exports", f"ceasa_{cidade}_{dia}.csv")
         with open(destino, "w", newline="", encoding="utf-8-sig") as f:
             w = csv.DictWriter(f, fieldnames=cabecalho, delimiter=";")
             w.writeheader()

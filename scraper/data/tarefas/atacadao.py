@@ -53,8 +53,6 @@ _LEGUMES = [
     "mandioca",
     "mandioquinha",
     "milho",
-    "pimentão",
-    "pimentao",
     "quiabo",
     "repolho",
     "tomate",
