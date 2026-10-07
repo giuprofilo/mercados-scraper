@@ -27,9 +27,9 @@ utils/parsers.py       parse_preco, extrair_quantidade_e_unidade, extrair_marca,
    chama `definir_cep(cep)`; depois `extrair_produtos_da_pagina(categoria, url, palavras_chave)`.
 4. Exceções são capturadas por tarefa (uma falha não derruba as demais). Scraper deve capturar as próprias
    exceções, logar e devolver o que já coletou.
-5. `main.py` insere cada `Produto` no SQLite (**sempre INSERT**, acumula histórico) e chama
+5. `main.py` só insere no SQLite (**sempre INSERT**, acumula histórico) se `config.SALVAR_NO_BANCO` (padrão `False`) ou `--salvar-banco`; chama
    `sheets_sync.sincronizar_produtos(produtos)` (grava numa aba **própria** da coleta, limpa e reescrita a cada execução).
-6. Relatórios no terminal (`listar_por_nome`, `--filtro`).
+6. Relatórios no terminal (`listar_por_nome`, `--filtro`); com o banco desligado, `--filtro` filtra a coleta em memória. Coleta só para o Sheets, sem banco: `python main.py`.
 
 ## Modelo `Produto` (`database.py`) — contrato de saída de todo scraper
 | Campo | Tipo | Regra |

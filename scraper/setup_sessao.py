@@ -11,6 +11,7 @@ import config as config
 SITES = {
     # "stock": "https://www.stokonline.com.br/",
     "atacadao": "https://www.atacadao.com.br/",
+    "superadega": "https://www.atacadistasuperadega.com.br/",
     # "asun": "https://www.levemaisonline.com.br/",
     # "fort": "https://www.fortatacadista.com.br/",
     # "gimba": "https://www.gimba.com.br/",

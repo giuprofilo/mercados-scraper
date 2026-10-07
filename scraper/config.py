@@ -10,6 +10,9 @@ CEP = "90560-005"
 
 # Banco de dados na raiz do projeto
 DB_PATH = os.path.join(BASE_DIR, "atacado_precos.db")
+# False = a coleta vai direto para o Sheets, sem gravar no SQLite (o fluxo atual
+# não precisa do histórico local). Reative aqui ou com `main.py --salvar-banco`.
+SALVAR_NO_BANCO = False
 
 # Playwright
 HEADLESS = True
