@@ -207,6 +207,13 @@ def _selecionar(pares: "list[tuple[Produto, dict | None]]", insumos: list[dict])
     return saida + sem_insumo
 
 
+def _limpar_observacao(texto: str) -> str:
+    """Tira da observação do insumo a instrução interna "não coletar bandeja"
+    (serve só para quem coleta; não deve ir para a aba de coleta)."""
+    partes = [t.strip() for t in re.split(r"[;\n]", texto or "")]
+    return "; ".join(t for t in partes if t and t.lower() != "não coletar bandeja")
+
+
 def _montar_linha(
     p: "Produto", insumo: dict | None, empresa: dict, pesquisador: str
 ) -> dict[str, object]:
@@ -230,7 +237,7 @@ def _montar_linha(
         "Categoria": insumo.get("Categoria", ""),
         "Grupo de Insumo": insumo.get("Grupo de Insumo", ""),
         "Descrição do insumo": insumo.get("Descrição", ""),
-        "Observações": insumo.get("Observações", ""),
+        "Observações": _limpar_observacao(insumo.get("Observações", "")),
         "UF Preço": empresa["UF Empresa"],
         "Data coleta": data,
         "Pesquisador": pesquisador,
