@@ -1,0 +1,44 @@
+Como usar esta planilha: Pesquisa de Preços - Alimentos FNDE Centro-Oeste
+
+"1) Cada LINHA da aba 'Coleta' é UM preço encontrado, não um produto. Se o mesmo"
+"   alimento tiver preço pra mais de um estado na mesma empresa, isso vira uma linha"
+   separada por estado (UF Preço).
+
+"2) Empresa nova? Cadastre primeiro na aba 'Empresas': Nome, CNPJ e a UF onde a"
+"   empresa está sediada (UF Empresa). Na Coleta, use o dropdown 'Buscar Empresa' "
+"   dá pra digitar o nome OU parte do CNPJ. CNPJ, Nome Empresa e UF Empresa vêm"
+"   automáticos a partir dessa escolha (colunas cinzas), não edite."
+
+3) Pesquisador novo na equipe? Adicione o nome em qualquer linha em branco da aba
+"   'Pesquisadores', o dropdown da aba Coleta atualiza sozinho."
+
+"4) Na Coleta, o dropdown 'Buscar Insumo' mostra a descrição do alimento e o código"
+"   FGV no final, dá pra digitar tanto o nome do alimento quanto o código. Código FGV,"
+"   Categoria, Grupo de Insumo, Descrição e Observações vêm automáticos (colunas"
+   cinzas). Fique de olho na coluna 'Observações': ela traz avisos específicos do
+"   item, tipo 'não coletar bandeja'."
+
+5) Pra buscar por nome/código nas colunas 'Buscar Empresa' e 'Buscar Insumo': clique
+"   na célula e DIGITE direto (sem clicar na setinha primeiro), o Excel filtra a"
+   lista conforme você digita. Isso funciona no Microsoft 365/Excel na Web; não
+"   funciona nas versões compradas avulsas (Excel 2019/2021). Se abrir pela setinha,"
+"   vem a lista sem busca, nesse caso digite a primeira letra do que procura com a"
+"   lista aberta, que ela pula direto pra esse trecho."
+
+6) Desconto: preencha SOMENTE UMA das colunas: 'Desconto %' (ex: digite 10%) OU
+"   'Desconto R$' (ex: digite 15), nunca as duas. O PREÇO FINAL calcula sozinho."
+
+"7) UF Preço disponível no momento: MT, MS, GO e DF (região Centro-Oeste). UF Empresa"
+"   aceita qualquer estado do Brasil + DF, porque a empresa pode estar sediada fora"
+   da região pesquisada.
+
+8) A aba 'Coleta' já vem com 1.500 linhas prontas (fórmulas e dropdowns aplicados)
+    dá margem pra mais de 5 preços por insumo/UF caso precise.
+
+"9) A aba 'Acompanhamento' mostra, pra cada insumo, quantos preços já foram coletados"
+"   em cada UF e quantos ainda faltam pra bater a meta (célula B2, hoje em 5 por UF)."
+"   As colunas 'Coletados' ficam vermelhas (<3), amarelas (3-4) ou verdes (5+);"
+   ordene por 'Total Faltam' (decrescente) pra priorizar a coleta.
+
+
+Dúvidas: fale com Thaissa.

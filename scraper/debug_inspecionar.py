@@ -27,6 +27,8 @@ DOMINIO_PARA_FORNECEDOR = {
     # "asunonline.com.br": "asun",
     "fortatacadista.com.br": "fort",
     # "gimba.com.br": "gimba",
+    "ifood.com.br": "ifood",
+    "atacadistasuperadega.com.br": "superadega",
 }
 
 

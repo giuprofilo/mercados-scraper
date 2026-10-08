@@ -115,7 +115,7 @@ TAREFAS_STOCK = [
             "melancia",
             "melão",
             "pêra",
-            "tanjerina",
+            "tangerina",
             "uva",
         ],
     },

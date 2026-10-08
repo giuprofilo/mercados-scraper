@@ -8,10 +8,11 @@ _A = "https://www.atacadao.com.br"
 _FRUTAS = [
     "abacate",
     "abacaxi",
-    "banana",
-    "bergamota",
+    "banana da terra",
+    "banana prata",
     "goiaba",
-    "laranja",
+    "laranja lima",
+    "laranja pera",
     "limão",
     "limao",
     "maçã",
@@ -19,15 +20,18 @@ _FRUTAS = [
     "maçãs",
     "mamão",
     "mamao",
-    "manga",
+    "manga palmer",
     "maracujá",
     "maracuja",
+    "pequi",
     "melancia",
     "melão",
     "melao",
-    "pêra",
-    "tanjerina",
-    "uva",
+    "pêra williams",
+    "pera williams",
+    "tangerina",
+    "uva itália",
+    "uva italia",
 ]
 _LEGUMES = [
     "abóbora",
@@ -39,6 +43,7 @@ _LEGUMES = [
     "batata doce",
     "batata inglesa",
     "batata baroa",
+    "batata salsa",
     "berinjela",
     "beterraba",
     "cebola",
@@ -46,11 +51,14 @@ _LEGUMES = [
     "chuchu",
     "inhame",
     "mandioca",
+    "mandioquinha",
     "milho",
-    "pimentão",
-    "pimentao",
+    "quiabo",
+    "repolho",
     "tomate",
     "vagem",
+    "ovo",
+    "ovos",
 ]
 _VERDURAS = [
     "acelga",
@@ -82,10 +90,12 @@ _BOVINA = [
     "musculo",
     "fígado",
     "figado",
-    "dianteiro",
     "paleta",
+    "peito",
+    "carne seca",
+    "charque",
 ]
-_SUINA = (["lombo", "copa lombo"],)
+_SUINA = ["lombo", "copa lombo"]
 _PEIXE = ["pescada"]
 
 TAREFAS_ATACADAO = [
@@ -94,7 +104,12 @@ TAREFAS_ATACADAO = [
         "fornecedor": "atacadao",
         "categoria": "Mercearia",
         "url": f"{_A}/mercearia/graos",
-        "palavras_chave": ["arroz", "feijão preto", "feijão carioca", "lentilha"],
+        "palavras_chave": [
+            "arroz",
+            "feijão preto",
+            "feijão carioca",
+            "canjica",
+        ],
     },
     {
         "fornecedor": "atacadao",
@@ -136,6 +151,13 @@ TAREFAS_ATACADAO = [
         "categoria": "Fermentos",
         "url": f"{_A}/mercearia/confeitaria/fermento",
         "palavras_chave": ["fermento químico", "fermento biológico", "fermento em pó"],
+    },
+    {
+        "fornecedor": "atacadao",
+        "categoria": "Temperos",
+        # sem corredor de temperos no menu: usa a busca do site (/s?q=...)
+        "url": f"{_A}/s?q=a%C3%A7afr%C3%A3o",
+        "palavras_chave": ["açafrão", "acafrao", "curcuma"],
     },
     # --- Açougue ---
     {
