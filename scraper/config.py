@@ -10,9 +10,12 @@ CEP = "90560-005"
 
 # Banco de dados na raiz do projeto
 DB_PATH = os.path.join(BASE_DIR, "atacado_precos.db")
+# False = a coleta vai direto para o Sheets, sem gravar no SQLite (o fluxo atual
+# não precisa do histórico local). Reative aqui ou com `main.py --salvar-banco`.
+SALVAR_NO_BANCO = False
 
 # Playwright
-HEADLESS = True
+HEADLESS = False
 NAV_TIMEOUT_MS = 45_000
 SLOW_MO_MS = 0
 
@@ -26,17 +29,23 @@ NAVEGADOR_CANAL = "chrome"
 
 def opcoes_navegador() -> dict:
     """Argumentos extras do launch_persistent_context conforme NAVEGADOR_CANAL."""
+    opcoes = {
+        "ignore_default_args": ["--enable-automation"],
+        "args": [
+            "--disable-blink-features=AutomationControlled",
+            "--no-first-run",
+            "--no-default-browser-check",
+            "--disable-infobars",
+        ],
+    }
     if NAVEGADOR_CANAL:
-        return {
-            "channel": NAVEGADOR_CANAL,
-            "ignore_default_args": ["--enable-automation"],
-        }
-    return {
-        "user_agent": (
+        opcoes["channel"] = NAVEGADOR_CANAL
+    else:
+        opcoes["user_agent"] = (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         )
-    }
+    return opcoes
 
 
 USAR_SESSAO_SALVA = True
@@ -45,8 +54,7 @@ PERFIL_NAVEGADOR_DIR = os.path.join(BASE_DIR, "credentials", "perfil_atacadao")
 MAX_PAGINAS_POR_CATEGORIA = 5
 
 # Google Sheets
-# ATENÇÃO: GOOGLE_SHEETS_SPREADSHEET_ID vem do .env
-# Veja o arquivo .env.example para o formato esperado.
+
 GOOGLE_SHEETS_ENABLED = True
 GOOGLE_SHEETS_CREDENTIALS_PATH = os.path.join(
     BASE_DIR, "credentials", "google_service_account.json"
@@ -55,8 +63,6 @@ GOOGLE_SHEETS_SPREADSHEET_ID = os.environ.get("GOOGLE_SHEETS_SPREADSHEET_ID")
 # Nome da aba NOVA desta coleta (apagada/reescrita a cada execução; as abas
 # originais da planilha são recusadas). Troque a cada coleta.
 GOOGLE_SHEETS_WORKSHEET_NAME = os.environ.get("GOOGLE_SHEETS_WORKSHEET_NAME")
-# Empresa pesquisada (nome ou parte do nome na aba Empresas) e pesquisador
-# (vazio = 1º nome da aba Pesquisadores).
 EMPRESA_COLETA = os.environ.get("EMPRESA_COLETA")
 PESQUISADOR = os.environ.get("PESQUISADOR")
 

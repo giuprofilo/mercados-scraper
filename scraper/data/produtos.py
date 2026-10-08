@@ -15,17 +15,19 @@ from data.tarefas.gimba import TAREFAS_GIMBA
 from data.tarefas.ifood import TAREFAS_IFOOD
 from data.tarefas.rappi import TAREFAS_RAPPI
 from data.tarefas.rappi_condor import TAREFAS_RAPPI_CONDOR
+from data.tarefas.superadega import TAREFAS_SUPERADEGA
 
 # from data.tarefas.stock import TAREFAS_STOCK
 
 TAREFAS_DE_COLETA = [
     # *TAREFAS_ARMAZEM,
     # *TAREFAS_ASUN,
-    *TAREFAS_ATACADAO,
+    # *TAREFAS_ATACADAO,
     # *TAREFAS_FORT,
     # *TAREFAS_GIMBA,
     # *TAREFAS_IFOOD,
     # *TAREFAS_RAPPI,
     # *TAREFAS_RAPPI_CONDOR,
     # *TAREFAS_STOCK,
+    *TAREFAS_SUPERADEGA,
 ]
