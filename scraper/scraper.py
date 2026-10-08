@@ -3,6 +3,7 @@ import logging
 from playwright.sync_api import sync_playwright
 
 import config as config
+from setup_sessao import USER_AGENT, HEADERS, INIT_SCRIPT
 from database import Produto
 from scrapers import SCRAPERS_DISPONIVEIS
 from data.produtos import TAREFAS_DE_COLETA
@@ -20,11 +21,11 @@ def criar_browser_context(playwright):
     context = browser.new_context(
         locale="pt-BR",
         viewport={"width": 1366, "height": 900},
-        user_agent=(
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-            "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
-        ),
+        timezone_id="America/Sao_Paulo",
+        user_agent=USER_AGENT,
+        extra_http_headers=HEADERS,
     )
+    context.add_init_script(INIT_SCRIPT)
     return browser, context
 
 
@@ -38,14 +39,22 @@ def executar_coletas(
 
         if config.USAR_SESSAO_SALVA:
             os.makedirs(config.PERFIL_NAVEGADOR_DIR, exist_ok=True)
-            context = p.chromium.launch_persistent_context(
-                user_data_dir=config.PERFIL_NAVEGADOR_DIR,
-                headless=config.HEADLESS,
-                slow_mo=config.SLOW_MO_MS,
-                locale="pt-BR",
-                viewport={"width": 1366, "height": 900},
+            # Mesmos UA/Client Hints/init script do setup_sessao.py (Chrome 131);
+            # opcoes_navegador() vem por último para não duplicar chaves.
+            opcoes = {
+                "headless": config.HEADLESS,
+                "slow_mo": config.SLOW_MO_MS,
+                "locale": "pt-BR",
+                "timezone_id": "America/Sao_Paulo",
+                "viewport": {"width": 1366, "height": 900},
+                "user_agent": USER_AGENT,
+                "extra_http_headers": HEADERS,
                 **config.opcoes_navegador(),
+            }
+            context = p.chromium.launch_persistent_context(
+                user_data_dir=config.PERFIL_NAVEGADOR_DIR, **opcoes
             )
+            context.add_init_script(INIT_SCRIPT)
             page = context.pages[0] if context.pages else context.new_page()
         else:
             browser, context = criar_browser_context(p)

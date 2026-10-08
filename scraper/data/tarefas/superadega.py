@@ -2,35 +2,30 @@
 Tarefas de coleta do Super Adega Atacadista (atacadistasuperadega.com.br),
 montadas a partir dos insumos da aba "Insumos" da planilha FNDE Centro-Oeste
 (csv/Pesquisa de Precos - Alimentos FNDE Centro-Oeste - Insumos.csv).
-
-Hortifruti usa as subcategorias confirmadas no site (/sub/<cat>/<slug>:
-frutas, legumes, verduras, ovos). As demais categorias (açougue, básicos,
-laticínios, mercearia) usam /cat/<slug>, que só mostra carrosséis com poucos
-itens por subcategoria: NÃO confirmado — trocar por /sub/<cat>/<slug> assim
-que o slug da subcategoria for visto no site, e conferir quais itens existem.
-
-Observação do CSV: "não coletar bandeja" (itens em bandeja/embalados não valem;
-o filtro por nome não separa isso, conferir na planilha). Sem tarefa dedicada:
-pequi e açafrão só entram se o site tiver (busca por palavra-chave nas
-categorias abaixo; se não aparecer, o item não existe na loja).
 """
 
 _B = "https://www.atacadistasuperadega.com.br"
 _HF = f"{_B}/sub/frutas-legumes-e-verduras"
+_AC = f"{_B}/sub/acougue-aves-e-peixaria"
+_AB = f"{_B}/sub/alimentos-basicos"
+_MT = f"{_B}/sub/matinais"
+_MC = f"{_B}/sub/mercearia"
 
 _FRUTAS = [
     "abacate",
     "abacaxi",
     "banana",
     "goiaba",
-    "laranja",
+    "laranja pera",
+    "laranja pêra",
+    "laranja lima",
     "limão",
     "limao",
     "maçã",
     "maca",
     "mamão",
     "mamao",
-    "manga",
+    "manga palmer",
     "maracujá",
     "maracuja",
     "pequi",
@@ -53,6 +48,7 @@ _LEGUMES = [
     "chuchu",
     "inhame",
     "mandioca",
+    "mandioquinha",
     "milho",
     "quiabo",
     "repolho",
@@ -70,6 +66,9 @@ _VERDURAS = [
     "chicoria",
     "couve",
     "salsa",
+    "salsinha",
+    "cheiro-verde",
+    "cheiro verde",
 ]
 _AVES = ["peito", "coxa", "sobrecoxa"]
 _BOVINA = [
@@ -85,7 +84,7 @@ _BOVINA = [
     "carne seca",
     "charque",
 ]
-_SUINA = ["lombo"]
+_SUINA = ["lombo, copa-lombo"]
 _PEIXE = ["pescada"]
 
 
@@ -103,44 +102,92 @@ TAREFAS_SUPERADEGA = [
     _t("Hortifruti - verduras", f"{_HF}/verduras", _VERDURAS),
     _t("Hortifruti - ovos", f"{_HF}/ovos", ["ovo", "ovos"]),
     # --- Açougue ---
-    _t("Aves", f"{_B}/cat/acougue-aves-e-peixaria", _AVES),
-    _t("Carne bovina", f"{_B}/cat/acougue-aves-e-peixaria", _BOVINA),
-    _t("Carne suína", f"{_B}/cat/acougue-aves-e-peixaria", _SUINA),
-    _t("Peixes", f"{_B}/cat/acougue-aves-e-peixaria", _PEIXE),
+    _t("Aves", f"{_AC}/aves-e-frangos", _AVES),
+    _t("Carne bovina", f"{_AC}/bovinos", _BOVINA),
+    _t("Carne suína", f"{_AC}/suinos", _SUINA),
+    _t("Peixes", f"{_AC}/peixaria", _PEIXE),
     # --- Mercearia ---
     _t(
         "Mercearia",
-        f"{_B}/cat/alimentos-basicos",
+        f"{_AB}/arroz",
         [
             "arroz",
+        ],
+    ),
+    _t(
+        "Mercearia",
+        f"{_AB}/feijao",
+        [
             "feijão preto",
             "feijao preto",
             "feijão carioca",
             "feijao carioca",
+        ],
+    ),
+    _t(
+        "Mercearia",
+        f"{_AB}/acucar",
+        [
+            "refinado",
+        ],
+    ),
+    _t(
+        "Mercearia",
+        f"{_AB}/graos",
+        [
             "canjica",
-            "açúcar refinado",
-            "acucar refinado",
+        ],
+    ),
+    _t(
+        "Mercearia",
+        f"{_AB}/farinhas-e-farofas",
+        [
             "farinha de trigo",
             "farinha de mandioca",
             "farinha de milho",
             "amido de milho",
+        ],
+    ),
+    _t(
+        "Mercearia",
+        f"{_MT}/cereais",
+        [
             "aveia",
         ],
     ),
-    _t("Massas", f"{_B}/cat/mercearia", ["macarrão", "macarrao", "espaguete"]),
+    _t(
+        "Massas",
+        f"{_MC}/massas-tradicionais-e-instantaneas",
+        ["macarrão com ovos", "com ovos", "c/ovos"],
+    ),
     _t(
         "Óleo",
-        f"{_B}/cat/mercearia",
-        ["óleo de soja", "oleo de soja", "azeite"],
+        f"{_AB}/oleo",
+        ["óleo de soja", "oleo de soja"],
+    ),
+    _t(
+        "Óleo",
+        f"{_MC}/azeites",
+        [
+            "extra virgem",
+        ],
     ),
     _t(
         "Fermentos",
-        f"{_B}/cat/mercearia",
+        f"{_B}/sub/padaria/bolos?page=2",
         ["fermento"],
     ),
-    _t("Temperos", f"{_B}/cat/mercearia", ["açafrão", "acafrao", "cúrcuma"]),
+    _t("Temperos", f"{_MC}/especiarias-e-temperos", ["açafrão", "acafrao", "cúrcuma"]),
     # --- Laticínios ---
-    _t("Frios e laticínios", f"{_B}/cat/laticinios", ["manteiga sem sal"]),
-    _t("Frios e laticínios", f"{_B}/cat/queijos", ["minas", "frescal"]),
-    _t("Leite", f"{_B}/cat/matinais", ["leite em pó", "leite em po"]),
+    _t(
+        "Frios e laticínios",
+        f"{_B}/sub/laticinios/manteigas-e-margarinas",
+        ["manteiga sem sal"],
+    ),
+    _t(
+        "Frios e laticínios",
+        f"{_B}/sub/queijos/queijos-encartelados?page=3",
+        ["fresco", "frescal"],
+    ),
+    _t("Leite", f"{_MT}/leites-em-po", ["integral"]),
 ]

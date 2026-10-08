@@ -1,35 +1,51 @@
 import os
+import random
 from playwright.sync_api import sync_playwright
-
 import config as config
 
-# Como o projeto usa UM único perfil de navegador persistente
-# (config.PERFIL_NAVEGADOR_DIR) para todos os fornecedores na mesma
-# execução, dá pra configurar o CEP/loja de todos os sites de uma vez só
-# aqui — cada site guarda cookies/sessionStorage no seu próprio domínio,
-# então não há conflito entre eles dentro do mesmo perfil.
+CHROME_VERSION = "147"
+USER_AGENT = f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{CHROME_VERSION}.0.0.0 Safari/537.36"
+
+HEADERS = {
+    "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+    "Sec-CH-UA": f'"Chromium";v="{CHROME_VERSION}", "Google Chrome";v="{CHROME_VERSION}", "Not_A Brand";v="24"',
+    "Sec-CH-UA-Mobile": "?0",
+    "Sec-CH-UA-Platform": '"Windows"',
+}
+
+INIT_SCRIPT = """
+Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+Object.defineProperty(navigator, 'languages', { get: () => ['pt-BR', 'pt', 'en-US', 'en'] });
+window.chrome = window.chrome || {};
+"""
+
 SITES = {
-    # "stock": "https://www.stokonline.com.br/",
-    "atacadao": "https://www.atacadao.com.br/",
-    "superadega": "https://www.atacadistasuperadega.com.br/",
-    # "asun": "https://www.levemaisonline.com.br/",
-    # "fort": "https://www.fortatacadista.com.br/",
-    # "gimba": "https://www.gimba.com.br/",
-    # "ifood": "https://www.ifood.com.br/delivery/canoas-rs/macromix--express-canoas-marechal-rondon/f711ef9e-6eef-4c32-8fdc-f368671bb6b9",
+    "superadega": "https://atacadistasuperadega.com.br",
 }
 
 
 def main():
     os.makedirs(config.PERFIL_NAVEGADOR_DIR, exist_ok=True)
 
+    # config.opcoes_navegador() já traz o channel (Chrome comercial instalado);
+    # mesclar em vez de **kwargs evita "multiple values" em user_agent/channel.
+    opcoes = {
+        "channel": "chrome",  # Força o uso do Chrome comercial instalado na sua máquina
+        "headless": False,  # Precisa ser False para você interagir
+        "locale": "pt-BR",
+        "timezone_id": "America/Sao_Paulo",
+        "viewport": {"width": 1366, "height": 900},
+        "user_agent": USER_AGENT,
+        "extra_http_headers": HEADERS,
+        **config.opcoes_navegador(),
+    }
+
     with sync_playwright() as p:
         context = p.chromium.launch_persistent_context(
-            user_data_dir=config.PERFIL_NAVEGADOR_DIR,
-            headless=False,
-            locale="pt-BR",
-            viewport={"width": 1366, "height": 900},
-            **config.opcoes_navegador(),
+            user_data_dir=config.PERFIL_NAVEGADOR_DIR, **opcoes
         )
+
+        context.add_init_script(INIT_SCRIPT)
 
         for nome, url in SITES.items():
             page = context.new_page()
@@ -37,38 +53,14 @@ def main():
 
             print("\n" + "=" * 70)
             print(f"[{nome}] Uma janela do navegador foi aberta em: {url}")
-            if nome == "ifood":
-                print(
-                    "   IFOOD: o Cloudflare/PerimeterX bloqueia o bot. Resolva o "
-                    "desafio 'Um momento…' na mão, informe o endereço de entrega "
-                    "(Canoas/RS) e confirme que a loja Macromix mostra os produtos."
-                )
-            if nome == "gimba":
-                print(
-                    "   GIMBA: não tem CEP. Clique em 'Olá, faça login', entre com a "
-                    "conta do CNPJ (e-mail + código de 6 dígitos) e confirme que o "
-                    "cabeçalho deixou de mostrar 'faça login' antes de apertar ENTER."
-                )
             print("1) Digite o CEP e selecione a loja mais próxima manualmente")
-            print("   (se o site já mostrar uma loja padrão por geolocalização,")
-            print("   confirme se é a loja certa e pule este passo).")
-            if nome == "fort":
-                print(
-                    "   ATENÇÃO: em teste manual, o Fort caiu por padrão numa loja "
-                    "de Balneário Camboriú/SC — confirme que a loja trocou para "
-                    "Porto Alegre/RS antes de apertar ENTER."
-                )
             print("2) Confirme que os produtos aparecem com preço normalmente.")
-            print("3) Navegue até uma categoria e confirme que os produtos")
-            print("   aparecem normalmente ali também.")
-            print("4) Volte aqui e aperte ENTER para ir para o próximo site.")
+            print("3) Volte aqui e aperte ENTER para salvar os cookies da sessão.")
             print("=" * 70)
             input(f"\nPressione ENTER quando terminar em [{nome}]... ")
             page.close()
 
         print(f"\nPerfil salvo em: {config.PERFIL_NAVEGADOR_DIR}")
-        print("Agora rode `python main.py` normalmente — o CEP não será mais pedido.")
-
         context.close()
 
 
