@@ -32,6 +32,7 @@ DOMINIO_PARA_FORNECEDOR = {
     "compras.supervi.com.br": "supervi",
     "comper.com.br": "comper",
     "abeve.com.br": "abeve",
+    "levemaxsuperatacado.com.br": "levemax",
 }
 
 

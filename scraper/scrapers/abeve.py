@@ -58,11 +58,9 @@ from utils.parsers import extrair_quantidade_e_unidade, extrair_marca
 
 logger = logging.getLogger(__name__)
 
-BASE_URL = "https://www.abeve.com.br"
-DOMINIO = "abeve.com.br"
-API_URL = "https://services.vipcommerce.com.br/api-admin/v1/org/276"
+API_BASE = "https://services.vipcommerce.com.br/api-admin/v1/org"
+# Chave pública da plataforma VIP Commerce (a mesma em todas as lojas, embutida no JS).
 API_CHAVE_LOJA = "df072f85df9bf7dd71b6811c34bdbaa4f219d98775b56cff9dfa5f8ca1bf8469"
-API_BUSCA = "/filial/1/centro_distribuicao/1/loja/buscas/produtos/termo"
 MAX_PAGINAS_SEGURANCA = 10
 PAUSA_ENTRE_PAGINAS_S = (0.5, 1.2)
 STATUS_BLOQUEIO = (403, 429, 503)
@@ -71,8 +69,18 @@ STATUS_BLOQUEIO = (403, 429, 503)
 class AbeveScraper(BaseScraper):
     nome_fornecedor = "abeve"
 
+    # Parâmetros da loja: outras lojas VIP Commerce (ex.: Levemax) herdam e trocam só estes.
+    NOME_LOJA = "Abevê"
+    DESCRICAO_LOJA = "loja única (Albino Torraca, Dourados/MS)"
+    BASE_URL = "https://www.abeve.com.br"
+    DOMINIO = "abeve.com.br"
+    ORG_ID = 276
+    FILIAL_ID = 1
+    CD_ID = 1
+
     # Em nível de classe: o scraper.py cria uma instância por tarefa, e o token e o dedupe
-    # precisam valer para a execução inteira.
+    # precisam valer para a execução inteira. Cada subclasse redefine os dois (senão
+    # compartilharia token e dedupe com a loja pai).
     _token: Optional[str] = None
     _ja_coletados: set = set()  # produto_id já devolvido nesta execução
 
@@ -88,35 +96,42 @@ class AbeveScraper(BaseScraper):
         ids = (query.get("secoes") or [""])[0]
         return {int(i) for i in ids.split(",") if i.strip().isdigit()} or None
 
-    @staticmethod
-    def _requisitar(caminho: str, token: Optional[str] = None, corpo=None) -> dict:
+    @classmethod
+    def _requisitar(cls, caminho: str, token: Optional[str] = None, corpo=None) -> dict:
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "DomainKey": DOMINIO,
-            "OrganizationId": "276",
-            "Origin": BASE_URL,
-            "Referer": f"{BASE_URL}/",
+            "DomainKey": cls.DOMINIO,
+            "OrganizationId": str(cls.ORG_ID),
+            "Origin": cls.BASE_URL,
+            "Referer": f"{cls.BASE_URL}/",
             "User-Agent": USER_AGENT,
         }
         if token:
             headers["Authorization"] = f"Bearer {token}"
         dados = json.dumps(corpo).encode() if corpo is not None else None
-        req = urllib.request.Request(f"{API_URL}{caminho}", data=dados, headers=headers)
+        req = urllib.request.Request(
+            f"{API_BASE}/{cls.ORG_ID}{caminho}", data=dados, headers=headers
+        )
         with urllib.request.urlopen(req, timeout=30) as resp:
             return json.load(resp)
 
     def _obter_token(self, renovar: bool = False) -> str:
-        if AbeveScraper._token is None or renovar:
+        cls = type(self)
+        if cls._token is None or renovar:
             resposta = self._requisitar(
                 "/auth/loja/login",
-                corpo={"domain": DOMINIO, "username": "loja", "key": API_CHAVE_LOJA},
+                corpo={"domain": cls.DOMINIO, "username": "loja", "key": API_CHAVE_LOJA},
             )
-            AbeveScraper._token = resposta["data"]
-        return AbeveScraper._token
+            cls._token = resposta["data"]
+        return cls._token
 
     def _buscar_pagina(self, termo: str, pagina: int) -> dict:
-        caminho = f"{API_BUSCA}/{urllib.parse.quote(termo)}?page={pagina}"
+        cls = type(self)
+        caminho = (
+            f"/filial/{cls.FILIAL_ID}/centro_distribuicao/{cls.CD_ID}"
+            f"/loja/buscas/produtos/termo/{urllib.parse.quote(termo)}?page={pagina}"
+        )
         try:
             return self._requisitar(caminho, self._obter_token())
         except urllib.error.HTTPError as e:
@@ -124,8 +139,8 @@ class AbeveScraper(BaseScraper):
                 raise
             return self._requisitar(caminho, self._obter_token(renovar=True))
 
-    @staticmethod
-    def _produto_da_api(item: dict, categoria: str, url_fonte: str) -> Optional[Produto]:
+    @classmethod
+    def _produto_da_api(cls, item: dict, categoria: str, url_fonte: str) -> Optional[Produto]:
         nome = (item.get("descricao") or "").strip()
         if not nome or not item.get("disponivel"):
             return None
@@ -158,9 +173,9 @@ class AbeveScraper(BaseScraper):
 
         link = item.get("link")
         id_produto = item.get("produto_id")
-        url_produto = f"{BASE_URL}/produto/{id_produto}/{link}" if link else url_fonte
+        url_produto = f"{cls.BASE_URL}/produto/{id_produto}/{link}" if link else url_fonte
         return Produto(
-            fornecedor=AbeveScraper.nome_fornecedor,
+            fornecedor=cls.nome_fornecedor,
             categoria=categoria,
             nome=nome,
             marca=extrair_marca(nome),
@@ -173,19 +188,20 @@ class AbeveScraper(BaseScraper):
         )
 
     def definir_cep(self, cep: str) -> None:
-        logger.info("Abevê: loja única (Albino Torraca, Dourados/MS) — nada a definir.")
+        logger.info("%s: %s — nada a definir.", self.NOME_LOJA, self.DESCRICAO_LOJA)
 
     def extrair_produtos_da_pagina(
         self, categoria: str, url: str, palavras_chave: Optional[list[str]] = None
     ) -> list[Produto]:
-        logger.info("Coletando categoria '%s' -> %s (Abevê)", categoria, url)
+        cls = type(self)
+        logger.info("Coletando categoria '%s' -> %s (%s)", categoria, url, cls.NOME_LOJA)
         produtos: list[Produto] = []
         vistos: set = set()
         sem_preco = 0
 
         termo = self._termo(url)
         if not termo:
-            logger.error("Abevê: URL sem termo de busca (use /busca?termo=<termo>): %s", url)
+            logger.error("%s: URL sem termo de busca (use /busca?termo=<termo>): %s", cls.NOME_LOJA, url)
             return produtos
 
         secoes = self._secoes(url)
@@ -196,20 +212,20 @@ class AbeveScraper(BaseScraper):
                     dados = self._buscar_pagina(termo, pagina)
                 except urllib.error.HTTPError as e:
                     nivel = "bloqueio" if e.code in STATUS_BLOQUEIO else "erro"
-                    logger.error("Abevê: HTTP %d (%s) em '%s'.", e.code, nivel, categoria)
+                    logger.error("%s: HTTP %d (%s) em '%s'.", cls.NOME_LOJA, e.code, nivel, categoria)
                     break
                 except (urllib.error.URLError, TimeoutError, ValueError, KeyError) as e:
-                    logger.error("Abevê: falha em '%s': %s", categoria, e)
+                    logger.error("%s: falha em '%s': %s", cls.NOME_LOJA, categoria, e)
                     break
 
                 for item in (dados.get("data") or {}).get("produtos") or []:
                     id_item = item.get("produto_id")
-                    if id_item in vistos or id_item in AbeveScraper._ja_coletados:
+                    if id_item in vistos or id_item in cls._ja_coletados:
                         continue
                     vistos.add(id_item)
                     if secoes and item.get("classificacao_mercadologica_id") not in secoes:
                         continue
-                    produto = self._produto_da_api(item, categoria, url)
+                    produto = cls._produto_da_api(item, categoria, url)
                     if produto is None:
                         sem_preco += 1
                         continue
@@ -217,7 +233,7 @@ class AbeveScraper(BaseScraper):
                         pc.lower() in produto.nome.lower() for pc in palavras_chave
                     ):
                         continue
-                    AbeveScraper._ja_coletados.add(id_item)
+                    cls._ja_coletados.add(id_item)
                     produtos.append(produto)
 
                 total_paginas = (dados.get("paginator") or {}).get("total_pages", 1)
@@ -225,10 +241,11 @@ class AbeveScraper(BaseScraper):
                 if pagina <= min(total_paginas, MAX_PAGINAS_SEGURANCA):
                     time.sleep(random.uniform(*PAUSA_ENTRE_PAGINAS_S))
         except Exception:
-            logger.exception("Erro ao processar categoria '%s' (Abevê)", categoria)
+            logger.exception("Erro ao processar categoria '%s' (%s)", categoria, cls.NOME_LOJA)
 
         logger.info(
-            "Abevê: %d produtos em '%s' (%d sem preço/indisponíveis).",
+            "%s: %d produtos em '%s' (%d sem preço/indisponíveis).",
+            cls.NOME_LOJA,
             len(produtos),
             categoria,
             sem_preco,
