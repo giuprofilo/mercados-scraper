@@ -68,7 +68,6 @@ _VERDURAS = [
     "couve",
     "couve chinesa",
     "couve flor",
-    "espinafre",
     "brócolis",
     "brocolis",
     "chicória",

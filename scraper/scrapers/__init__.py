@@ -7,7 +7,9 @@ from scrapers.gimba import GimbaScraper
 from scrapers.armazem import ArmazemScraper
 from scrapers.ifood import IfoodScraper
 from scrapers.superadega import SuperAdegaScraper
-from scrapers.rappi import RappiScraper, RappiCondorScraper
+from scrapers.supervi import SuperviScraper
+from scrapers.comper import ComperScraper
+from scrapers.rappi import RappiScraper, RappiCondorScraper, RappiBarateiroScraper
 
 SCRAPERS_DISPONIVEIS: dict[str, type[BaseScraper]] = {
     "atacadao": AtacadaoScraper,
@@ -19,7 +21,10 @@ SCRAPERS_DISPONIVEIS: dict[str, type[BaseScraper]] = {
     "ifood": IfoodScraper,
     "rappi": RappiScraper,
     "rappi_condor": RappiCondorScraper,
+    "rappi_barateiro": RappiBarateiroScraper,
     "superadega": SuperAdegaScraper,
+    "supervi": SuperviScraper,
+    "comper": ComperScraper,
 }
 
 __all__ = ["BaseScraper", "SCRAPERS_DISPONIVEIS"]
