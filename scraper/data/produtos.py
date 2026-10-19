@@ -6,6 +6,7 @@ se escolhe quais entram na coleta (comente a linha para desativar). A lista
 de alimentos de referência fica em data/alimentos.py.
 """
 
+from data.tarefas.abeve import TAREFAS_ABEVE
 from data.tarefas.armazem import TAREFAS_ARMAZEM
 from data.tarefas.atacadao import TAREFAS_ATACADAO
 from data.tarefas.comper import TAREFAS_COMPER
@@ -23,10 +24,11 @@ from data.tarefas.supervi import TAREFAS_SUPERVI
 # from data.tarefas.stock import TAREFAS_STOCK
 
 TAREFAS_DE_COLETA = [
+    *TAREFAS_ABEVE,
     # *TAREFAS_ARMAZEM,
     # *TAREFAS_ASUN,
     # *TAREFAS_ATACADAO,
-    *TAREFAS_COMPER,
+    # *TAREFAS_COMPER,
     # *TAREFAS_FORT,
     # *TAREFAS_GIMBA,
     # *TAREFAS_IFOOD,
