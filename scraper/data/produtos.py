@@ -17,6 +17,7 @@ from data.tarefas.comper import TAREFAS_COMPER
 from data.tarefas.gimba import TAREFAS_GIMBA
 from data.tarefas.ifood import TAREFAS_IFOOD
 from data.tarefas.levemax import TAREFAS_LEVEMAX
+from data.tarefas.machadao import TAREFAS_MACHADAO
 from data.tarefas.mega import TAREFAS_MEGA
 from data.tarefas.rappi import TAREFAS_RAPPI
 from data.tarefas.rappi_barateiro import TAREFAS_RAPPI_BARATEIRO
@@ -31,12 +32,13 @@ TAREFAS_DE_COLETA = [
     # *TAREFAS_ARMAZEM,
     # *TAREFAS_ASUN,
     # *TAREFAS_ATACADAO,
-    *TAREFAS_CETAP,
+    # *TAREFAS_CETAP,
     # *TAREFAS_COMPER,
     # *TAREFAS_FORT,
     # *TAREFAS_GIMBA,
     # *TAREFAS_IFOOD,
     # *TAREFAS_LEVEMAX,
+    *TAREFAS_MACHADAO,
     # *TAREFAS_MEGA,
     # *TAREFAS_RAPPI,
     # *TAREFAS_RAPPI_CONDOR,
