@@ -8,14 +8,17 @@ de alimentos de referência fica em data/alimentos.py.
 
 from data.tarefas.armazem import TAREFAS_ARMAZEM
 from data.tarefas.atacadao import TAREFAS_ATACADAO
+from data.tarefas.comper import TAREFAS_COMPER
 
 # from data.tarefas.asun import TAREFAS_ASUN
 # from data.tarefas.fort import TAREFAS_FORT
 from data.tarefas.gimba import TAREFAS_GIMBA
 from data.tarefas.ifood import TAREFAS_IFOOD
 from data.tarefas.rappi import TAREFAS_RAPPI
+from data.tarefas.rappi_barateiro import TAREFAS_RAPPI_BARATEIRO
 from data.tarefas.rappi_condor import TAREFAS_RAPPI_CONDOR
 from data.tarefas.superadega import TAREFAS_SUPERADEGA
+from data.tarefas.supervi import TAREFAS_SUPERVI
 
 # from data.tarefas.stock import TAREFAS_STOCK
 
@@ -23,11 +26,14 @@ TAREFAS_DE_COLETA = [
     # *TAREFAS_ARMAZEM,
     # *TAREFAS_ASUN,
     # *TAREFAS_ATACADAO,
+    *TAREFAS_COMPER,
     # *TAREFAS_FORT,
     # *TAREFAS_GIMBA,
     # *TAREFAS_IFOOD,
     # *TAREFAS_RAPPI,
     # *TAREFAS_RAPPI_CONDOR,
     # *TAREFAS_STOCK,
-    *TAREFAS_SUPERADEGA,
+    # *TAREFAS_SUPERADEGA,
+    # *TAREFAS_SUPERVI,
+    # *TAREFAS_RAPPI_BARATEIRO,
 ]

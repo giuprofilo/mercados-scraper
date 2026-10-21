@@ -106,8 +106,8 @@ def _palavras(texto: str) -> list[str]:
 
 
 def _casa(palavra: str, palavras_do_nome: list[str]) -> bool:
-    # startswith cobre plural: "ovo" casa "ovos".
-    return any(p.startswith(palavra) for p in palavras_do_nome)
+    # Igualdade ou plural simples: "ovo" casa "ovos", mas "maca" não casa "macarrao".
+    return any(p in (palavra, palavra + "s", palavra + "es") for p in palavras_do_nome)
 
 
 def escolher_insumo(nome_produto: str, insumos: list[dict]) -> dict | None:
@@ -124,6 +124,16 @@ def escolher_insumo(nome_produto: str, insumos: list[dict]) -> dict | None:
             melhor_pontos, melhores = pontos, [insumo]
         elif pontos == melhor_pontos:
             melhores.append(insumo)
+    if len(melhores) > 1:
+        # Empate: vale o insumo cuja 1ª palavra aparece antes no nome do produto
+        # ("Macarrão com Ovos" -> macarrão, não ovo).
+        def posicao(insumo: dict) -> int:
+            return next(
+                i for i, p in enumerate(palavras_nome) if _casa(insumo["_palavras"][0], [p])
+            )
+
+        melhor_pos = min(posicao(i) for i in melhores)
+        melhores = [i for i in melhores if posicao(i) == melhor_pos]
     return melhores[0] if len(melhores) == 1 else None
 
 
