@@ -35,6 +35,7 @@ DOMINIO_PARA_FORNECEDOR = {
     "levemaxsuperatacado.com.br": "levemax",
     "megaemcasa.atacadistamega.com.br": "mega",
     "cetap.lifeappsecommerce.com.br": "cetap",
+    "sedistribuidora.com.br": "sedistribuidora",
 }
 
 

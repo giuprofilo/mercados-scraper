@@ -21,6 +21,7 @@ from data.tarefas.mega import TAREFAS_MEGA
 from data.tarefas.rappi import TAREFAS_RAPPI
 from data.tarefas.rappi_barateiro import TAREFAS_RAPPI_BARATEIRO
 from data.tarefas.rappi_condor import TAREFAS_RAPPI_CONDOR
+from data.tarefas.sedistribuidora import TAREFAS_SEDISTRIBUIDORA
 from data.tarefas.superadega import TAREFAS_SUPERADEGA
 from data.tarefas.supervi import TAREFAS_SUPERVI
 
@@ -31,7 +32,7 @@ TAREFAS_DE_COLETA = [
     # *TAREFAS_ARMAZEM,
     # *TAREFAS_ASUN,
     # *TAREFAS_ATACADAO,
-    *TAREFAS_CETAP,
+    # *TAREFAS_CETAP,
     # *TAREFAS_COMPER,
     # *TAREFAS_FORT,
     # *TAREFAS_GIMBA,
@@ -40,6 +41,7 @@ TAREFAS_DE_COLETA = [
     # *TAREFAS_MEGA,
     # *TAREFAS_RAPPI,
     # *TAREFAS_RAPPI_CONDOR,
+    *TAREFAS_SEDISTRIBUIDORA,
     # *TAREFAS_STOCK,
     # *TAREFAS_SUPERADEGA,
     # *TAREFAS_SUPERVI,
