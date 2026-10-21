@@ -21,7 +21,7 @@ window.chrome = window.chrome || {};
 
 SITES = {
     # "atacadao": "https://www.atacadao.com.br",
-    "comper": "https://www.comper.com.br",
+    "mega": "https://www.megaemcasa.atacadistamega.com.br/",
 }
 
 
