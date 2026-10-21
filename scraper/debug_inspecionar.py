@@ -33,6 +33,7 @@ DOMINIO_PARA_FORNECEDOR = {
     "comper.com.br": "comper",
     "abeve.com.br": "abeve",
     "levemaxsuperatacado.com.br": "levemax",
+    "megaemcasa.atacadistamega.com.br": "mega",
 }
 
 
