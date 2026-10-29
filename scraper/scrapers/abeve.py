@@ -96,6 +96,11 @@ class AbeveScraper(BaseScraper):
         ids = (query.get("secoes") or [""])[0]
         return {int(i) for i in ids.split(",") if i.strip().isdigit()} or None
 
+    @staticmethod
+    def _nome_confere(nome: str, palavras_chave: list[str]) -> bool:
+        """Filtro padrão: substring, sem normalizar acento. Subclasses podem trocar."""
+        return any(pc.lower() in nome.lower() for pc in palavras_chave)
+
     @classmethod
     def _requisitar(cls, caminho: str, token: Optional[str] = None, corpo=None) -> dict:
         headers = {
@@ -229,9 +234,7 @@ class AbeveScraper(BaseScraper):
                     if produto is None:
                         sem_preco += 1
                         continue
-                    if palavras_chave and not any(
-                        pc.lower() in produto.nome.lower() for pc in palavras_chave
-                    ):
+                    if palavras_chave and not cls._nome_confere(produto.nome, palavras_chave):
                         continue
                     cls._ja_coletados.add(id_item)
                     produtos.append(produto)
