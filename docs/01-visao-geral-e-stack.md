@@ -30,6 +30,7 @@ python main.py                              # coleta + SQLite + Sheets (produç�
 python setup_sessao.py                      # abre navegador visível p/ salvar CEP/login (1x por site)
 python debug_inspecionar.py "<url>"         # salva logs/debug_pagina.html + screenshot; mostra nº de cards
 python ceasa_pdf.py ../CEASA/<cotacao>.pdf  # PDF da CEASA-PR -> exports/ceasa_curitiba_<data>.csv (só itens da lista do Atacadão; requer pdftotext)
+python ceasa_pdf.py ../CEASA/CEASA-GO-27-10.pdf  # CEASA-GO (como MT/DF/MS): formato Coleta guiado pelos Insumos -> exports/ceasa_go_<data>.csv; --sheets --aba "GO - CEASA 27-10" envia
 ```
 Imports são relativos à pasta `scraper/` (`import config`, `from database import ...`), então **sempre
 executar de dentro de `scraper/`**.
