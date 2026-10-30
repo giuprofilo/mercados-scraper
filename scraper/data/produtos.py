@@ -9,6 +9,7 @@ de alimentos de referência fica em data/alimentos.py.
 from data.tarefas.abeve import TAREFAS_ABEVE
 from data.tarefas.armazem import TAREFAS_ARMAZEM
 from data.tarefas.atacadao import TAREFAS_ATACADAO
+from data.tarefas.casaaurora import TAREFAS_CASAAURORA
 from data.tarefas.cetap import TAREFAS_CETAP
 from data.tarefas.comper import TAREFAS_COMPER
 
@@ -32,6 +33,7 @@ TAREFAS_DE_COLETA = [
     # *TAREFAS_ARMAZEM,
     # *TAREFAS_ASUN,
     # *TAREFAS_ATACADAO,
+    # *TAREFAS_CASAAURORA,
     # *TAREFAS_CETAP,
     # *TAREFAS_COMPER,
     # *TAREFAS_FORT,

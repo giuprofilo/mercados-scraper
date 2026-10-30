@@ -36,6 +36,7 @@ DOMINIO_PARA_FORNECEDOR = {
     "megaemcasa.atacadistamega.com.br": "mega",
     "cetap.lifeappsecommerce.com.br": "cetap",
     "redemachado.com.br": "redemachado",
+    "casaaurorasupermercados.com.br": "casaaurora",
 }
 
 

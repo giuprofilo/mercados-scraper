@@ -14,6 +14,7 @@ from scrapers.levemax import LevemaxScraper
 from scrapers.mega import MegaScraper
 from scrapers.cetap import CetapScraper
 from scrapers.redemachado import RedeMachadoScraper
+from scrapers.casaaurora import CasaAuroraScraper
 from scrapers.rappi import RappiScraper, RappiCondorScraper, RappiBarateiroScraper
 
 SCRAPERS_DISPONIVEIS: dict[str, type[BaseScraper]] = {
@@ -35,6 +36,7 @@ SCRAPERS_DISPONIVEIS: dict[str, type[BaseScraper]] = {
     "mega": MegaScraper,
     "cetap": CetapScraper,
     "redemachado": RedeMachadoScraper,
+    "casaaurora": CasaAuroraScraper,
 }
 
 __all__ = ["BaseScraper", "SCRAPERS_DISPONIVEIS"]
