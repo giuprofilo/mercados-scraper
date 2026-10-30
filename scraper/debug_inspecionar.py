@@ -37,6 +37,7 @@ DOMINIO_PARA_FORNECEDOR = {
     "cetap.lifeappsecommerce.com.br": "cetap",
     "redemachado.com.br": "redemachado",
     "casaaurorasupermercados.com.br": "casaaurora",
+    "delmorosupermercados.com.br": "delmoro",
 }
 
 
