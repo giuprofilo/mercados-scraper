@@ -45,6 +45,12 @@ Dois formatos (detectados pelo texto do PDF):
   de saída e mesmas regras do MT (insumos do CSV, PREÇO FINAL = R$/kg pelo peso
   médio da faixa; sem peso = preço da embalagem). FONTE = FONTE_DF. Linhas sem
   cotação (vazias ou 0,00) ficam fora. Seções: hortaliças, frutas, ovos, diversos.
+- CEASA-GO ("CENTRAIS DE ABASTECIMENTO DE GOIÁS", CEASA-GO-*.pdf): Código | Produto |
+  Embalagem | QTD(KG) | Classe | +Comum | Máximo | Mínimo | R$/KG, com o nome do produto
+  quebrado em várias linhas (e às vezes partido pela quebra de página). QTD(KG) = kg da
+  embalagem (0,00 = sem peso; "CX 20" de óleo = 20 garrafas, ver preco_kg_go). Mesmo
+  formato de saída e mesmas regras do MT/DF (insumos do CSV). Só a classe 1 entra
+  (CLASSES_GO); a 2 é a qualidade inferior do mesmo produto. FONTE = FONTE_GO.
 - Requer o utilitário pdftotext (poppler-utils) instalado no sistema.
 
 Uso (de dentro de scraper/):
@@ -52,6 +58,7 @@ Uso (de dentro de scraper/):
     python ceasa_pdf.py ../CEASA/cotacao-POA-24-09.pdf --sheets   # CSV + Sheets
     python ceasa_pdf.py ../CEASA/CEASA-MT-CUIABA-05.09.pdf        # CSV no formato Coleta
     python ceasa_pdf.py ../CEASA/CEASA-DF-05-10.pdf --sheets --aba "DF - CEASA 05-10"
+    python ceasa_pdf.py ../CEASA/CEASA-GO-27-10.pdf --sheets --aba "GO - CEASA 27-10"
     python "ceasa_pdf.py" "../CEASA/CEASA MS - 02_10 - 2.csv" --sheets   # MS (CSV do SIMAB)
     python ceasa_pdf.py <pdf> --sheets --aba "PR - CEASA 24-09"    # outra aba que a do .env
 
@@ -541,6 +548,86 @@ def preco_kg_df(r: dict) -> tuple[Optional[float], str]:
     return comum / peso, f"peso médio da embalagem {peso:g} kg"
 
 
+_RE_LINHA_GO = re.compile(
+    r"^\s*(?P<cod>\d+)\s+(?P<texto>\S.*?)\s+(?P<qtd>\d+,\d{2})\s+(?P<classe>\d)"
+    r"\s+(?P<comum>\d+(?:\.\d{3})*,\d{2})\s+(?P<max>\d+(?:\.\d{3})*,\d{2})"
+    r"\s+(?P<min>\d+(?:\.\d{3})*,\d{2})\s+\d+(?:\.\d{3})*,\d{2}\s*$"
+)
+_RE_SECAO_GO = re.compile(r"^\s*\d+\s+\d{2}-[A-ZÇÃ]")
+_CABECALHO_GO = ("codigo", "produto", "preco (r$)", "+comum", "cotacao", "emissao", "periodo")
+# Embalagens do boletim; sem coluna separada (nome e embalagem colados) vale a última palavra.
+_EMB_GO = {"CX", "SC", "MOL", "UN", "UNI", "MC", "PLT", "PE", "BD", "ENG", "DZ", "MAO", "PCT",
+           "KG", "FD", "PC"}  # fmt: skip
+CLASSES_GO = {1}
+_RE_ML_GO = re.compile(r"(\d+)\s*ML\b", re.IGNORECASE)
+
+
+def extrair_go(texto: str) -> tuple[list[dict], str, list[str]]:
+    """Formato CEASA-GO. Devolve (registros, data, avisos). Mesmos campos do MT/DF
+    (procedencia vazia), mais classe, qtd (kg da embalagem) e preco_kg (R$/KG do PDF).
+    O nome do produto continua nas linhas seguintes (inclusive após a quebra de página)."""
+    registros, avisos = [], []
+    m = re.search(r"DATA DA COTA\S*.*?(\d{2}/\d{2}/\d{4})", texto, re.DOTALL)
+    data = m.group(1) if m else ""
+    secao = ""
+    for linha in texto.replace("\f", "\n").splitlines():
+        if not linha.strip():
+            continue
+        if linha.lstrip().startswith("Legenda:"):
+            break
+        if _RE_SECAO_GO.match(linha):
+            secao = _norm(re.sub(r"^\s*\d+\s+\d{2}-", "", linha))
+            continue
+        if not secao:  # título e datas do cabeçalho
+            continue
+        norm = _norm(linha)
+        if any(c in norm for c in _CABECALHO_GO) and not _RE_LINHA_GO.match(linha):
+            continue
+        m = _RE_LINHA_GO.match(linha)
+        if m:
+            segs = [s for s in re.split(r"\s{2,}", m.group("texto").strip()) if s]
+            if len(segs) == 1:  # nome e embalagem colados ("BATATA DOCE CX") ou sem embalagem
+                palavras = segs[0].split()
+                if len(palavras) > 1 and palavras[-1] in _EMB_GO:
+                    segs = [" ".join(palavras[:-1]), palavras[-1]]
+                else:
+                    segs.append("")
+            if len(segs) != 2:
+                avisos.append(f"linha não reconhecida: {linha.strip()}")
+                continue
+            comum, maximo, minimo = (_num(m.group(g)) or None for g in ("comum", "max", "min"))
+            registros.append(
+                {
+                    "secao": secao,
+                    "produto": segs[0],
+                    "embalagem": segs[1],
+                    "procedencia": "",
+                    "classe": int(m.group("classe")),
+                    "qtd": _num(m.group("qtd")),
+                    "min": minimo,
+                    "mais_comum": comum,
+                    "max": maximo,
+                }
+            )
+        elif registros and not re.search(r"\d,\d{2}(?!\d)", linha):
+            registros[-1]["produto"] += " " + linha.strip()  # continuação do nome
+        else:
+            avisos.append(f"linha não reconhecida: {linha.strip()}")
+    return [r for r in registros if r["classe"] in CLASSES_GO], data, avisos
+
+
+def preco_kg_go(r: dict) -> tuple[Optional[float], str]:
+    """(R$ por kg ou por L, nota) do registro de Goiás; None quando QTD(KG) = 0."""
+    comum, qtd = r["mais_comum"], r["qtd"]
+    if comum is None or not qtd:
+        return None, ""
+    ml = _RE_ML_GO.search(r["produto"])
+    if ml and r["embalagem"] in ("CX", "FD"):  # óleo: QTD = nº de garrafas da caixa
+        litros = qtd * int(ml.group(1)) / 1000
+        return comum / litros, f"{qtd:g} un x {ml.group(1)} ml = {litros:g} L"
+    return comum / qtd, f"R$/kg do boletim (embalagem {qtd:g} kg)"
+
+
 _RE_DATA_MS = re.compile(r"(\w+)\s+(\d{1,2}),\s*(\d{4})")
 _MESES = {
     "janeiro": 1, "fevereiro": 2, "março": 3, "marco": 3, "abril": 4, "maio": 5, "junho": 6,
@@ -642,6 +729,7 @@ ALIAS_INSUMO_MS = {  # "carioquinha" não casa com "carioca" pelo casamento por 
 FONTE_DF = "https://www.portal.ceasadf.com.br/informacao-mercado"
 EXCLUIR_MT = {"alface americana"}  # pedido do usuário: não coletar (vale para MT e DF)
 
+FONTE_GO = "Boletim CEASA-GO (Centrais de Abastecimento de Goiás)"
 ALIAS_INSUMO_MT = {
     "batata lisa": "BATATA, INGLESA, CRUA",
     "couve": "COUVE, MANTEIGA, CRUA",
@@ -668,6 +756,29 @@ ALIAS_INSUMO_DF = {
     "ovos de galinha branco medio": "OVO, DE GALINHA, INTEIRO, CRU",
     "ovos de galinha vermelho extra": "OVO, DE GALINHA, INTEIRO, CRU",
     "ovos de galinha vermelho grande": "OVO, DE GALINHA, INTEIRO, CRU",
+}
+
+# Variedades do boletim de Goiás que o casamento por palavra ligaria a um insumo de outra
+# variedade/produto (cabotian, tahiti, formosa, palmer, fuji, williams, tomate salada...).
+EXCLUIR_GO = EXCLUIR_MT | {
+    "abobora (moranga)", "abobora goianinha", "abobora verde menina", "abobora verde comum-1",
+    "alface", "alho porro", "limao china", "limao galego", "limao nacional siciliano",
+    "mamao havai (sp)", "manga tommys (go)", "manga espada", "manga rosa", "manga hadem (sp)",
+    "maracuja doce", "maca nacional gala (solta)",
+    "maca naiconal gala (cart.) t150", "maca nacional start (cart.)",
+    "maca nacional golden (solta)", "maca argentina", "maca americana", "melancia baby",
+    "melao orange", "ovo caipira caixa", "ovo codorna", "pera asiatica nacional",
+    "pera americana", "pera argentina", "queijo", "repolho roxo", "tomate cereja",
+    "tomate saladete",
+}  # fmt: skip
+ALIAS_INSUMO_GO = {  # batata inglesa vendida como "lisa" / "comum" (cultivares achat, delta, ômega)
+    "batata lisa (achati-binj)": "BATATA, INGLESA, CRUA",
+    "batata comum (delta- omega-pri)": "BATATA, INGLESA, CRUA",
+    "couve em molho": "COUVE, MANTEIGA, CRUA",
+    "couve maco": "COUVE, MANTEIGA, CRUA",
+    "couve - chinesa": "ACELGA, CRUA",
+    "batata salsa (mandioca salsa)": "BATATA, BAROA, CRUA",  # mandioquinha
+    "abobora verde italiana": "ABOBRINHA, ITALIANA, CRUA",  # é a abobrinha, não a cabotian
 }
 
 
@@ -825,7 +936,7 @@ def main() -> None:
     pdf = args[0]
 
     texto = "" if pdf.lower().endswith(".csv") else _texto_pdf(pdf)
-    if pdf.lower().endswith(".csv") or "Central de Abastecimento de Cuiabá" in texto or "CEASA/DF" in texto:
+    if pdf.lower().endswith(".csv") or "Central de Abastecimento de Cuiabá" in texto or "CEASA/DF" in texto or "CEASA-GO" in texto:
         if pdf.lower().endswith(".csv"):
             registros, data, avisos = extrair_ms(pdf)
             cidade = "ms"
@@ -837,6 +948,12 @@ def main() -> None:
             cidade = "df"
             cabecalho, linhas, avisos_coleta = montar_coleta_mt(
                 registros, data, "DF", FONTE_DF, "CEASA-DF", ALIAS_INSUMO_DF, preco_kg_df, EXCLUIR_DF
+            )
+        elif "CEASA-GO" in texto:
+            registros, data, avisos = extrair_go(texto)
+            cidade = "go"
+            cabecalho, linhas, avisos_coleta = montar_coleta_mt(
+                registros, data, "GO", FONTE_GO, "CEASA-GO", ALIAS_INSUMO_GO, preco_kg_go, EXCLUIR_GO
             )
         else:
             registros, data, avisos = extrair_mt(texto)
