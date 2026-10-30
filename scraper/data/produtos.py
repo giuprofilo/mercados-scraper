@@ -12,6 +12,7 @@ from data.tarefas.atacadao import TAREFAS_ATACADAO
 from data.tarefas.casaaurora import TAREFAS_CASAAURORA
 from data.tarefas.cetap import TAREFAS_CETAP
 from data.tarefas.comper import TAREFAS_COMPER
+from data.tarefas.delmoro import TAREFAS_DELMORO
 
 # from data.tarefas.asun import TAREFAS_ASUN
 # from data.tarefas.fort import TAREFAS_FORT
@@ -36,6 +37,7 @@ TAREFAS_DE_COLETA = [
     # *TAREFAS_CASAAURORA,
     # *TAREFAS_CETAP,
     # *TAREFAS_COMPER,
+    *TAREFAS_DELMORO,
     # *TAREFAS_FORT,
     # *TAREFAS_GIMBA,
     # *TAREFAS_IFOOD,
@@ -43,7 +45,7 @@ TAREFAS_DE_COLETA = [
     # *TAREFAS_MEGA,
     # *TAREFAS_RAPPI,
     # *TAREFAS_RAPPI_CONDOR,
-    *TAREFAS_REDEMACHADO,
+    # *TAREFAS_REDEMACHADO,
     # *TAREFAS_STOCK,
     # *TAREFAS_SUPERADEGA,
     # *TAREFAS_SUPERVI,
