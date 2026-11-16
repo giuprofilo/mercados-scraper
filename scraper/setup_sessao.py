@@ -21,7 +21,8 @@ window.chrome = window.chrome || {};
 
 SITES = {
     # "atacadao": "https://www.atacadao.com.br",
-    "delmoro": "https://www.delmorosupermercados.com.br/",
+    # "delmoro": "https://www.delmorosupermercados.com.br/",
+    "super adega": "https://www.atacadistasuperadega.com.br/",
 }
 
 

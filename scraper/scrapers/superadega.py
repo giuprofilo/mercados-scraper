@@ -189,8 +189,11 @@ class SuperAdegaScraper(BaseScraper):
             qtd_minima_atacado=int(qtd_minima) if qtd_minima else None,
             preco_original=preco_original,
             desconto=desconto,
-            # A API não traz o link do produto: a fonte é a URL do grupo/subgrupo.
-            url_produto=url_fonte,
+            # O item da API traz `slug`; a página do produto é /p/<slug> (confirmado nas coletas
+            # antigas, ex.: /p/abacate-kg). Sem slug, a fonte é a URL do grupo/subgrupo.
+            url_produto=(
+                f"{BASE_URL}/p/{item['slug']}" if item.get("slug") else url_fonte
+            ),
         )
 
     @staticmethod
