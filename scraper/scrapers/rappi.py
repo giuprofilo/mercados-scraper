@@ -5,6 +5,8 @@ muda o nome do fornecedor gravado; a loja em si vem na URL das tarefas:
   loja 900637167-assaiatacadista-nc.
 - "rappi_condor": Condor (Curitiba/PR),
   loja 900685906-condor-supermer-alpormayor-nc.
+- "rappi_barateiro": Pão de Açúcar Barateiro Asa Norte (Brasília/DF),
+  loja 900659399-pao-de-azucar-barateiro-nc.
 Plataforma: Next.js + API "web-gateway" do Rappi. Os produtos são lidos
 do JSON (não do HTML), então não há seletor CSS de preço a manter.
 
@@ -28,6 +30,10 @@ Como o site funciona (confirmado contra o site real):
   quantidade 1 kg.
 - Promoção: real_price (ou real_balance_price, no peso) é o preço cheio e
   "discount" é a fração de desconto (0.34 = -34%).
+- O link /p/<slug>-<id> é do produto "genérico": a página pode mostrar
+  outro mercado como disponível, mas ao adicionar ao carrinho a entrega é
+  da loja do usuário (confirmado com a loja Barateiro). É o link individual
+  usado na coluna FONTE (a busca na loja não foi aceita: não abre o item).
 - Quando a loja não tem o item, o Rappi completa a lista (principalmente
   no "Ver mais" e na busca) com produtos de OUTRAS lojas (ex: "Coxa Seara
   Iqf 1 Kg" do Sam's Club aparecendo no Condor). Cada produto traz
@@ -392,3 +398,8 @@ class RappiScraper(BaseScraper):
 class RappiCondorScraper(RappiScraper):
     nome_fornecedor = "rappi_condor"
     nome_loja = "Condor, Curitiba/PR"
+
+
+class RappiBarateiroScraper(RappiScraper):
+    nome_fornecedor = "rappi_barateiro"
+    nome_loja = "Pão de Açúcar Barateiro Asa Norte, Brasília/DF"

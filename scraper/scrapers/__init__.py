@@ -7,7 +7,18 @@ from scrapers.gimba import GimbaScraper
 from scrapers.armazem import ArmazemScraper
 from scrapers.ifood import IfoodScraper
 from scrapers.superadega import SuperAdegaScraper
-from scrapers.rappi import RappiScraper, RappiCondorScraper
+from scrapers.supervi import SuperviScraper
+from scrapers.comper import ComperScraper
+from scrapers.abeve import AbeveScraper
+from scrapers.levemax import LevemaxScraper
+from scrapers.mega import MegaScraper
+from scrapers.cetap import CetapScraper
+from scrapers.redemachado import RedeMachadoScraper
+from scrapers.machadao import MachadaoScraper
+from scrapers.casaaurora import CasaAuroraScraper
+from scrapers.delmoro import DelMoroScraper
+from scrapers.mateusmais import MateusMaisScraper
+from scrapers.rappi import RappiScraper, RappiCondorScraper, RappiBarateiroScraper
 
 SCRAPERS_DISPONIVEIS: dict[str, type[BaseScraper]] = {
     "atacadao": AtacadaoScraper,
@@ -19,7 +30,19 @@ SCRAPERS_DISPONIVEIS: dict[str, type[BaseScraper]] = {
     "ifood": IfoodScraper,
     "rappi": RappiScraper,
     "rappi_condor": RappiCondorScraper,
+    "rappi_barateiro": RappiBarateiroScraper,
     "superadega": SuperAdegaScraper,
+    "supervi": SuperviScraper,
+    "comper": ComperScraper,
+    "abeve": AbeveScraper,
+    "levemax": LevemaxScraper,
+    "mega": MegaScraper,
+    "cetap": CetapScraper,
+    "redemachado": RedeMachadoScraper,
+    "machadao": MachadaoScraper,
+    "casaaurora": CasaAuroraScraper,
+    "delmoro": DelMoroScraper,
+    "mateusmais": MateusMaisScraper,
 }
 
 __all__ = ["BaseScraper", "SCRAPERS_DISPONIVEIS"]

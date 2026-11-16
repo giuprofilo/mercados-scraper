@@ -52,6 +52,7 @@ Uso (de dentro de scraper/):
     python ceasa_pdf.py ../CEASA/cotacao-POA-24-09.pdf --sheets   # CSV + Sheets
     python ceasa_pdf.py ../CEASA/CEASA-MT-CUIABA-05.09.pdf        # CSV no formato Coleta
     python ceasa_pdf.py ../CEASA/CEASA-DF-05-10.pdf --sheets --aba "DF - CEASA 05-10"
+    python "ceasa_pdf.py" "../CEASA/CEASA MS - 02_10 - 2.csv" --sheets   # MS (CSV do SIMAB)
     python ceasa_pdf.py <pdf> --sheets --aba "PR - CEASA 24-09"    # outra aba que a do .env
 
 Com --sheets, a aba é a de GOOGLE_SHEETS_WORKSHEET_NAME (.env) e é SOBRESCRITA;
@@ -540,8 +541,104 @@ def preco_kg_df(r: dict) -> tuple[Optional[float], str]:
     return comum / peso, f"peso médio da embalagem {peso:g} kg"
 
 
+_RE_DATA_MS = re.compile(r"(\w+)\s+(\d{1,2}),\s*(\d{4})")
+_MESES = {
+    "janeiro": 1, "fevereiro": 2, "março": 3, "marco": 3, "abril": 4, "maio": 5, "junho": 6,
+    "julho": 7, "agosto": 8, "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12,
+}  # fmt: skip
+# "cx 20 uni 900 ml", "cx 36 pct 200 grs", "cx 10 sc 1 L": N unidades de tamanho fixo.
+_RE_MULTI_MS = re.compile(
+    r"(\d+)\s*(?:uni|pct|sc)\s*(\d+(?:,\d+)?)\s*(kg|grs|gr|g|ml|l)\b", re.IGNORECASE
+)
+_RE_FAIXA_MS = re.compile(
+    r"(\d+(?:,\d+)?)\s*(?:(?:a|s|-)\s*(\d+(?:,\d+)?))?\s*(kg|ks|g)\b", re.IGNORECASE
+)
+
+
+def extrair_ms(caminho: str) -> tuple[list[dict], str, list[str]]:
+    """Formato CEASA-MS (CSV do SIMAB/MAPA: Produto, Embalagem, P. Minimo, P. M. Comum,
+    P. Maximo, Situação, em seções). Mesmos campos do MT/DF (procedencia vazia).
+    Preço 0,00 / situação AUS = sem cotação (mínimo/comum/máximo = None)."""
+    registros, avisos = [], []
+    data, secao = "", ""
+    with open(caminho, newline="", encoding="utf-8-sig") as f:
+        for linha in csv.reader(f):
+            linha = (linha + [""] * 6)[:6]
+            if linha[0].strip() == "Data:":
+                m = _RE_DATA_MS.search(linha[2])
+                if m and _norm(m.group(1)) in {_norm(k) for k in _MESES}:
+                    mes = next(v for k, v in _MESES.items() if _norm(k) == _norm(m.group(1)))
+                    data = f"{int(m.group(2)):02d}/{mes:02d}/{m.group(3)}"
+                continue
+            nome, emb, mn, mc, mx, sit = (c.strip() for c in linha)
+            if not nome or nome == "Produto":
+                continue
+            if not emb:  # título de seção ("FRUTAS", "SIGLAS") ou texto solto
+                secao = _norm(nome)
+                continue
+            try:
+                precos = [_num(p) or None for p in (mn, mc, mx)]
+            except ValueError:
+                avisos.append(f"linha não reconhecida: {','.join(linha)}")
+                continue
+            if sit.upper() in ("AUS", "S/INF."):
+                precos = [None, None, None]
+            registros.append(
+                {
+                    "secao": secao,
+                    "produto": re.sub(r"\s+", " ", nome),
+                    "embalagem": emb,
+                    "procedencia": "",
+                    "min": precos[0],
+                    "mais_comum": precos[1],
+                    "max": precos[2],
+                }
+            )
+    return registros, data, avisos
+
+
+def preco_kg_ms(r: dict) -> tuple[Optional[float], str]:
+    """(R$ por kg ou por L, nota) do registro do MS; None quando a embalagem não tem peso."""
+    comum = r["mais_comum"]
+    emb = r["embalagem"].lower().replace("–", "-")
+    if comum is None:
+        return None, ""
+    if emb in ("kg", "l"):
+        return comum, f"preço por {emb}"
+    m = _RE_MULTI_MS.search(emb)
+    if m:
+        n, tam, un = int(m.group(1)), float(m.group(2).replace(",", ".")), m.group(3).lower()
+        total = n * tam / (1000 if un in ("g", "gr", "grs", "ml") else 1)
+        return comum / total, f"{n} x {tam:g} {un} = {total:g} {'L' if un in ('ml', 'l') else 'kg'}"
+    m = _RE_FAIXA_MS.search(emb)
+    if not m:
+        return None, ""
+    a = float(m.group(1).replace(",", "."))
+    b = float(m.group(2).replace(",", ".")) if m.group(2) else a
+    kg = (a + b) / 2
+    kg = kg / 1000 if m.group(3).lower() == "g" else kg
+    return comum / kg, f"peso médio da embalagem {kg:g} kg"
+
+
 # Nomes do boletim de Cuiabá que não repetem a descrição do insumo.
 FONTE_MT = "https://www.agriculturafamiliar.mt.gov.br/prohort2"
+FONTE_MS = "Boletim CEASA-MS (SIMAB/MAPA)"
+# Itens do boletim do MS que o casamento por palavra ligaria a um insumo de outra variedade/produto
+# (o insumo é arroz tipo 1, açúcar refinado, maçã fuji, pêra williams, mamão formosa, leite em pó,
+# queijo minas frescal, salsa, farinha de mandioca crua...). Nomes normalizados (_norm).
+EXCLUIR_MS = {"alface americana"} | {_norm(n) for n in {
+    "arroz beneficiado - longo fino - tipo 2", "arroz c/casca / produtor", "acucar cristal",
+    "maca gala exta tp80 / 120", "maca gala comercial tp80 / 135",
+    "maca importada - red del tp88 / 113", "maca importada - gransmith tp88 / 113",
+    "Pêra Importada - D´Anjour TP 80 / 120", "mamao hawai / papaia",
+    "leite / atacado - tipo c (10sco1l)", "leite / produtor - tp c (cota)",
+    "queijo mucarela", "queijo prato", "salsao (sp)", "repolho roxo primeira (ms)",
+    "repolho roxo extra (sp/pr)", "farinha de mandioca torrada fina",
+}}  # fmt: skip
+ALIAS_INSUMO_MS = {  # "carioquinha" não casa com "carioca" pelo casamento por palavra
+    "feijao carioquinha / atacado - tipo 1": "FEIJÃO, CARIOCA, CRU",
+    "feijao carioquinha / atacado - tipo 2": "FEIJÃO, CARIOCA, CRU",
+}
 FONTE_DF = "https://www.portal.ceasadf.com.br/informacao-mercado"
 EXCLUIR_MT = {"alface americana"}  # pedido do usuário: não coletar (vale para MT e DF)
 
@@ -727,9 +824,15 @@ def main() -> None:
         sys.exit(__doc__)
     pdf = args[0]
 
-    texto = _texto_pdf(pdf)
-    if "Central de Abastecimento de Cuiabá" in texto or "CEASA/DF" in texto:
-        if "CEASA/DF" in texto:
+    texto = "" if pdf.lower().endswith(".csv") else _texto_pdf(pdf)
+    if pdf.lower().endswith(".csv") or "Central de Abastecimento de Cuiabá" in texto or "CEASA/DF" in texto:
+        if pdf.lower().endswith(".csv"):
+            registros, data, avisos = extrair_ms(pdf)
+            cidade = "ms"
+            cabecalho, linhas, avisos_coleta = montar_coleta_mt(
+                registros, data, "MS", FONTE_MS, "CEASA-MS", ALIAS_INSUMO_MS, preco_kg_ms, EXCLUIR_MS
+            )
+        elif "CEASA/DF" in texto:
             registros, data, avisos = extrair_df(texto)
             cidade = "df"
             cabecalho, linhas, avisos_coleta = montar_coleta_mt(

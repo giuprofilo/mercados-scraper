@@ -4,6 +4,7 @@ import logging
 import config
 import database
 from scraper import executar_coletas
+import planilha_fgv
 import sheets_sync
 
 logging.basicConfig(
@@ -62,6 +63,11 @@ def main():
         "--sem-sheets", action="store_true", help="Não sincroniza com o Google Sheets"
     )
     parser.add_argument(
+        "--exportar-csv",
+        action="store_true",
+        help="Salva a coleta em exports/ no layout da aba Coleta (usa os CSVs de csv/; sem Sheets)",
+    )
+    parser.add_argument(
         "--salvar-banco",
         action="store_true",
         help="Grava a coleta também no SQLite (por padrão: config.SALVAR_NO_BANCO)",
@@ -97,6 +103,12 @@ def main():
             logger.info(
                 "%d produtos coletados (banco SQLite desabilitado).", len(produtos)
             )
+
+        if args.exportar_csv:
+            try:
+                planilha_fgv.exportar_csv(produtos)
+            except Exception:
+                logger.exception("Falha ao exportar o CSV da coleta.")
 
         if not args.sem_sheets:
             try:

@@ -72,6 +72,10 @@ SUBCATEGORIAS_API = {
     "/sub/frutas-legumes-e-verduras/legumes": "6824c4a987820670c37dc763",
     "/sub/frutas-legumes-e-verduras/verduras": "6824c4a987820670c37dc765",
     "/sub/frutas-legumes-e-verduras/ovos": "6824c4a987820670c37dc764",
+    "/sub/acougue-aves-e-peixaria/bovinos": "6824c4a587820670c37dc713",
+    "/sub/acougue-aves-e-peixaria/aves-e-frangos": "6824c4a587820670c37dc712",
+    "/sub/acougue-aves-e-peixaria/suinos": "6824c4a587820670c37dc717",
+    "/sub/acougue-aves-e-peixaria/peixaria": "6824c4a587820670c37dc716",
     "/sub/laticinios/manteigas-e-margarinas": "6824c4ab87820670c37dc778",
     "/sub/matinais/cereais": "6824c4ab87820670c37dc789",
     "/sub/matinais/leites-em-po": "6824c4ab87820670c37dc78c",
@@ -185,8 +189,11 @@ class SuperAdegaScraper(BaseScraper):
             qtd_minima_atacado=int(qtd_minima) if qtd_minima else None,
             preco_original=preco_original,
             desconto=desconto,
-            # A API não traz o link do produto: a fonte é a URL do grupo/subgrupo.
-            url_produto=url_fonte,
+            # O item da API traz `slug`; a página do produto é /p/<slug> (confirmado nas coletas
+            # antigas, ex.: /p/abacate-kg). Sem slug, a fonte é a URL do grupo/subgrupo.
+            url_produto=(
+                f"{BASE_URL}/p/{item['slug']}" if item.get("slug") else url_fonte
+            ),
         )
 
     @staticmethod

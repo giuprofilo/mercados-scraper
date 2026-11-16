@@ -20,7 +20,9 @@ window.chrome = window.chrome || {};
 """
 
 SITES = {
-    "superadega": "https://atacadistasuperadega.com.br",
+    # "atacadao": "https://www.atacadao.com.br",
+    # "delmoro": "https://www.delmorosupermercados.com.br/",
+    "super adega": "https://www.atacadistasuperadega.com.br/",
 }
 
 

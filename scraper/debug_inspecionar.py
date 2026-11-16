@@ -29,6 +29,16 @@ DOMINIO_PARA_FORNECEDOR = {
     # "gimba.com.br": "gimba",
     "ifood.com.br": "ifood",
     "atacadistasuperadega.com.br": "superadega",
+    "compras.supervi.com.br": "supervi",
+    "comper.com.br": "comper",
+    "abeve.com.br": "abeve",
+    "levemaxsuperatacado.com.br": "levemax",
+    "megaemcasa.atacadistamega.com.br": "mega",
+    "cetap.lifeappsecommerce.com.br": "cetap",
+    "redemachado.com.br": "redemachado",
+    "casaaurorasupermercados.com.br": "casaaurora",
+    "delmorosupermercados.com.br": "delmoro",
+    "mateusmais.com.br": "mateusmais",
 }
 
 

@@ -83,8 +83,9 @@ _BOVINA = [
     "peito",
     "carne seca",
     "charque",
+    "jerked",
 ]
-_SUINA = ["lombo, copa-lombo"]
+_SUINA = ["lombo", "copa-lombo"]
 _PEIXE = ["pescada"]
 
 

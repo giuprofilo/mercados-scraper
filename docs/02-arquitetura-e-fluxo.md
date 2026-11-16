@@ -7,7 +7,7 @@ database.py            dataclass Produto + SQLite (init_db, inserir_produto, lis
 scraper.py             executar_coletas(): abre Playwright, itera tarefas, instancia scrapers
 main.py                CLI (argparse): coleta -> SQLite -> Sheets -> relatórios
 sheets_sync.py         sincronizar_produtos(lista) [padrão, delega a planilha_fgv] / sincronizar_planilha() [histórico do banco]
-planilha_fgv.py        formato da planilha FNDE (aba Coleta): vínculo produto->insumo, empresa, pesquisador
+planilha_fgv.py        formato da planilha FNDE Nordeste (aba Coleta, 20 colunas): vínculo produto->insumo, empresa, pesquisador; exportar_csv()
 setup_sessao.py        dict SITES: abre cada site visível p/ salvar CEP/loja/login no perfil
 debug_inspecionar.py   dict DOMINIO_PARA_FORNECEDOR: salva HTML renderizado + conta cards
 scrapers/base.py       BaseScraper (ABC): definir_cep(cep), extrair_produtos_da_pagina(categoria,url,palavras_chave)
@@ -50,19 +50,29 @@ utils/parsers.py       parse_preco, extrair_quantidade_e_unidade, extrair_marca,
 Adicionar campo novo exige mexer em `database.py` (+ migração `ALTER TABLE`) **e** `sheets_sync._CAMPOS_PRODUTO`
 — evitar; só com pedido explícito.
 
-## Sheets (planilha "Pesquisa de Preços - Alimentos FNDE Centro-Oeste") — `planilha_fgv.py`
+## Sheets (planilha "Pesquisa FNDE Nordeste - Alimentos") — `planilha_fgv.py`
+Exemplos dos três layouts exportados em `csv/Pesquisa FNDE Nordeste - Alimentos(Empresas|Insumos|Coleta).csv`
+(CSV `;`, cp1252). O layout Centro-Oeste anterior foi substituído.
 - Abas originais (Coleta, Insumos, Empresas, Pesquisadores, Leia-me, Acompanhamento) **nunca são escritas**;
   `GOOGLE_SHEETS_WORKSHEET_NAME` com esses nomes (ou vazio) é recusado. Trocar o nome a cada coleta (aba nova).
-- `.env`: `GOOGLE_SHEETS_WORKSHEET_NAME` (aba da coleta), `EMPRESA_COLETA` (nome/parte na aba Empresas, uma por vez),
-  `PESQUISADOR` (opcional; padrão = 1º da aba Pesquisadores).
-- Colunas = cabeçalho da aba Coleta (22), gravadas como **valores** (RAW). Insumos vêm da aba Insumos, empresa de Empresas.
-  Data `dd-mm-aaaa`; FONTE = `url_produto`; Preço PRODUTO = preço cheio (ou atual); Desconto R$ = cheio − atual;
-  PREÇO FINAL = atual; frete e Desconto % vazios.
-- Produto -> insumo: palavras da Descrição do insumo (sem cru/de/sem...) contra o nome do produto; 1ª palavra obrigatória,
-  mais palavras em comum ganha. Sem insumo/empate: a linha vai com insumo em branco + aviso no log. **Nada é descartado.**
-- Limite de 5 linhas por insumo (`MAX_PRECOS_POR_INSUMO`): ficam as de maior peso (empate = mais barata), saída ordenada
-  por insumo e do menor para o maior preço. Linhas sem insumo não têm limite.
-- Busca no site é só pelo termo curto (palavras_chave das tarefas, ex.: "abacate"); a planilha recebe a Descrição completa.
+- `.env`: `GOOGLE_SHEETS_WORKSHEET_NAME` (aba da coleta), `EMPRESA_COLETA` (nome/parte na aba Empresas, uma por vez;
+  ex.: `Mateus Supermercados`), `PESQUISADOR` (obrigatório se não houver aba Pesquisadores), `OBS_FRETE` (opcional).
+- Empresas: `Código Empresa, Nome Empresa, CNPJ, UF Empresa` (sem coluna de busca). Insumos: `ID FGV, Categoria,
+  Grupo de Insumo, Descrição, Embalagem, Observações, Busca (dropdown)`.
+- Saída = 20 colunas da aba Coleta (`COLUNAS_SAIDA`), valores sem cabeçalho: Nome Empresa, CNPJ, UF Empresa, Buscar Insumo,
+  Código FGV, Categoria, Grupo de Insumo, Descrição do insumo, UF Preço, Data coleta (dd/mm/aa), Pesquisador, FONTE (=url),
+  PRODUTO PESQUISADO (nome; embalagem ≠ 1 kg/1 L ganha " | Unidade do item: 1 KG"/"1 l"), Preço PRODUTO (cheio ou atual),
+  Desconto % (vazio), Desconto R$ (cheio/lista − final), OBS Desconto (promoção / "preço de atacado a partir de N unid.: R$ x"),
+  PREÇO FINAL (atacado, se houver, senão o atual), VALOR FRETE (vazio), OBS FRETE (`OBS_FRETE` ou "retirada na loja do
+  próprio estado: frete não se aplica").
+- Produto -> insumo: 1º pelo ID FGV na `categoria` da tarefa (`"FRUTA ## 39"`, mesmo formato do dropdown); sem ID,
+  palavras da Descrição do insumo contra o nome do produto (1ª palavra obrigatória, mais palavras em comum ganha). Sem
+  insumo/empate: a linha vai com insumo em branco + aviso no log. **Nada é descartado.**
+- Limite de 5 linhas por insumo (`MAX_PRECOS_POR_INSUMO`): ficam as de maior peso (empate = mais barata), mesmo produto
+  (URL) repetido conta uma vez, saída ordenada por insumo e do menor para o maior preço.
+- Busca no site é só pelo termo curto das tarefas; a planilha recebe a Descrição completa.
+- **Conferir sem Sheets**: `python main.py --sem-sheets --exportar-csv` grava `exports/coleta_<empresa>_<data>.csv` no
+  mesmo layout, lendo Insumos/Empresas de `csv/` (precisa de `EMPRESA_COLETA` e `PESQUISADOR`).
 - `sincronizar_planilha()` (histórico do banco) continua com o formato antigo, mas também exige aba com nome válido.
 
 ## config.py — valores atuais relevantes
