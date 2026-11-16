@@ -38,6 +38,7 @@ DOMINIO_PARA_FORNECEDOR = {
     "redemachado.com.br": "redemachado",
     "casaaurorasupermercados.com.br": "casaaurora",
     "delmorosupermercados.com.br": "delmoro",
+    "mateusmais.com.br": "mateusmais",
 }
 
 

@@ -11,7 +11,7 @@
 | Modelo | Sites | `definir_cep` | Para mudar a região |
 |---|---|---|---|
 | **CEP em modal** (sessão salva no perfil) | atacadao, stock, asun, fort | preenche CEP/escolhe loja; **pula** se `credentials/perfil_atacadao/` já tem conteúdo | apagar/refazer perfil: `python setup_sessao.py` e configurar o CEP novo manualmente (ou apagar `credentials/perfil_atacadao/`) |
-| **Loja na URL** | armazem (`/loja-N`), rappi/rappi_condor (`/lojas/<id>-<tipo>`) | só loga "nada a definir"; **ignora o CEP** | trocar a base da URL nas tarefas (`_B`) pelo id da loja da nova região; **o `config.CEP` não tem efeito** |
+| **Loja na URL** | armazem (`/loja-N`), rappi/rappi_condor (`/lojas/<id>-<tipo>`), mateusmais (`market_ids=<id>` na URL de busca) | só loga "nada a definir"; **ignora o CEP** | trocar a base da URL nas tarefas (`_B`) pelo id da loja da nova região; **o `config.CEP` não tem efeito** |
 | **Conta/sem região** | gimba (preço por conta CNPJ, login manual), sites de preço único | confere sessão/login ou vazio | relogar via `setup_sessao.py` |
 
 ## Regras ao criar/alterar
@@ -20,3 +20,4 @@
 - **Conferir a loja escolhida** (sites às vezes caem numa loja padrão de outra cidade por geolocalização) — logar o nome da loja/cidade detectada quando o site mostrar.
 - Ao trocar de região, os dados no SQLite continuam misturados (a tabela não tem coluna de região/CEP). Se o usuário precisar separar coletas por região, isso exige decisão de schema (`database.py` + `sheets_sync._CAMPOS_PRODUTO`) — **perguntar antes**. Enquanto isso, registrar a região na `categoria` da tarefa ou na aba do Sheets (`GOOGLE_SHEETS_WORKSHEET_NAME`, ex.: `Coleta Curitiba`).
 - Lojas conhecidas: Armazém `/loja-1` = Curitiba/PR (sem loja em POA); Rappi Assaí Água Verde = `900637167-assaiatacadista-nc`, Condor = `900685906-condor-supermer-alpormayor-nc` (ambas Curitiba/PR; CEP de referência usado no levantamento: 80730-420). Para outra cidade: descobrir os ids das lojas da região no site.
+- Mateus Mais: lojas por coordenada via `GET app.mateusmais.com.br/api/products/market-category-group/?latitude=&longitude=&city_code=`. Fortaleza/CE (-3.7319,-38.5267, 2304400) = Mix Mateus José Walter `8d5dfbd5-2150-43ee-b408-329c576550ea` (atacarejo, usada nas tarefas) e Mateus Express José Walter; Sobral = Mix Mateus Sobral `b749a737-a0e9-4b17-87b2-3c7ca88300b6`. Para outra cidade: descobrir o `market_id` e trocar `_LOJA` em `data/tarefas/mateusmais.py`.
