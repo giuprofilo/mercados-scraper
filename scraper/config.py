@@ -65,6 +65,8 @@ GOOGLE_SHEETS_SPREADSHEET_ID = os.environ.get("GOOGLE_SHEETS_SPREADSHEET_ID")
 GOOGLE_SHEETS_WORKSHEET_NAME = os.environ.get("GOOGLE_SHEETS_WORKSHEET_NAME")
 EMPRESA_COLETA = os.environ.get("EMPRESA_COLETA")
 PESQUISADOR = os.environ.get("PESQUISADOR")
+# Texto da coluna OBS FRETE (padrão em planilha_fgv.OBS_FRETE_PADRAO).
+OBS_FRETE = os.environ.get("OBS_FRETE")
 
 # Screenshots de Produtos
 SALVAR_PRINTS_ITENS = False
