@@ -85,6 +85,7 @@ _UNIDADES = {"kg": "kg", "gr": "g", "g": "g", "ml": "ml", "lt": "L", "l": "L", "
 
 class RedeMachadoScraper(BaseScraper):
     nome_fornecedor = "redemachado"
+    BASE_URL = BASE_URL  # subclasses (ex.: Machadão) trocam o site
 
     SEL_LINHA = "tr.cart-table__row"
     SEL_LINK = "a[data-nome]"
@@ -160,10 +161,10 @@ class RedeMachadoScraper(BaseScraper):
         logger.error("0 produtos em '%s' (Rede Machado). HTML salvo em %s", categoria, caminho)
 
     def _garantir_consentimento_de_cookies(self, forcar: bool = False) -> None:
-        cookies = self.page.context.cookies(BASE_URL)
+        cookies = self.page.context.cookies(self.BASE_URL)
         if not forcar and any(c["name"] == "agile_cookie_consent" for c in cookies):
             return
-        self.page.goto(BASE_URL, timeout=config.NAV_TIMEOUT_MS, wait_until="domcontentloaded")
+        self.page.goto(self.BASE_URL, timeout=config.NAV_TIMEOUT_MS, wait_until="domcontentloaded")
         try:
             self.page.get_by_text("Aceitar", exact=True).click(timeout=8000)
             self.page.wait_for_timeout(1500)
@@ -184,7 +185,7 @@ class RedeMachadoScraper(BaseScraper):
     def _reiniciar_sessao_do_site(self) -> None:
         """Apaga os cookies do domínio, menos o do WAF, e aceita os cookies de novo."""
         contexto = self.page.context
-        for c in contexto.cookies(BASE_URL):
+        for c in contexto.cookies(self.BASE_URL):
             if not c["name"].startswith("aws-waf"):
                 contexto.clear_cookies(name=c["name"], domain=c["domain"])
         self._garantir_consentimento_de_cookies(forcar=True)
@@ -225,9 +226,9 @@ class RedeMachadoScraper(BaseScraper):
                 self._reiniciar_sessao_do_site()
         return "falha"
 
-    @staticmethod
-    def _arquivo_checkpoint() -> str:
-        return os.path.join(config.BASE_DIR, "logs", f"cache_redemachado_{date.today()}.json")
+    @classmethod
+    def _arquivo_checkpoint(cls) -> str:
+        return os.path.join(config.BASE_DIR, "logs", f"cache_{cls.nome_fornecedor}_{date.today()}.json")
 
     @classmethod
     def _tarefas_concluidas(cls) -> dict:
